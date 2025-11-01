@@ -1,37 +1,56 @@
-# Base para aplicativo web
+# Guarda Memória
 
-Este é um template de projeto para criação de aplicativos web que oferece autenticação segura por e-mail, utilizando magic links. É baseado em tecnologias populares, como Node.js, Next.js, React, NextAuth.js e Nodemailer, e foi projetado para simplificar o processo de início de projetos.
+## Descrição do Projeto
 
-## Visão Geral
+Em todas as cidades existem pessoas que estão na memória dos residentes. São pessoas comuns que se tornam ícones locais, mas que a nova geração pode não conhecer ou dar valor se não souber da história. O "Guarda Memória" é um site estilo rede social dedicado a preservar e compartilhar essas histórias.
 
-Um aplicativo web é um programa de computador que pode ser acessado de praticamente qualquer lugar do mundo através de um navegador web. Este template permite criar um ambiente onde os usuários podem navegar em uma página inicial pública e, a partir dela, acessar áreas restritas garantidas por autenticação por e-mail. O método de autenticação envolve o envio de um e-mail com um link de acesso único.
+Na página inicial, há uma landing page aberta ao público. Após o login, os usuários acessam uma página para selecionar o estado e a cidade de interesse. Cada cidade possui sua própria lista de pessoas cadastradas e estrutura de pódio, com ranking baseado na popularidade local.
+
+Os usuários indicam pessoas conhecidas para criar páginas dedicadas, podendo incluir a si mesmos (mas não obrigatório). Todas as interações, como comentários e materiais enviados, são identificadas corretamente com o usuário responsável.
+
+O site promove a conexão intergeracional através de histórias compartilhadas.
+
+## Funcionalidades Principais
+
+- **Landing Page Pública**: Página inicial acessível sem login, apresentando o conceito do site.
+- **Sistema de Autenticação**: Login via NextAuth.js (e-mail, Google, etc.) para acessar áreas restritas.
+- **Seleção de Localização**: Após login, página para escolher estado e cidade, direcionando para o conteúdo local.
+- **Página de Pessoas Cadastradas**: Exibe lista de pessoas da cidade selecionada com ranking de popularidade local.
+- **Cadastro de Pessoas**: Usuários indicam pessoas conhecidas (incluindo si mesmos, opcionalmente) para criar páginas dedicadas em cidades específicas, incluindo nome, história, foto, etc. Todas as ações são identificadas com o usuário.
+- **Sistema de Ranking por Cidade**: Pessoas são ranqueadas por popularidade dentro da cidade escolhida, baseado em votações, número de comentários, curtidas e fotos enviadas.
+- **Pódio das Top 3 por Cidade**: Destaque visual para as três pessoas mais conhecidas da cidade no início da página.
+- **Interação Social**: Possibilidade de curtir, comentar ou compartilhar histórias.
+- **Página de Detalhes da Pessoa**: Ao clicar em uma pessoa, abre uma página estilo fórum com comentários, áudios, vídeos, relatos e materiais enviados pelos usuários.
+- **Avisos de Responsabilidade**: Em todas as páginas de interação, avisos como "Tudo que você fizer é sua responsabilidade".
+- **Sistema de Logs**: Registro de todas as ações dos usuários (cadastros, comentários, uploads, etc.) para rastreabilidade e auditoria.
+- **Moderação Comunitária**: Sistema de denúncias para conteúdos inadequados, com revisão por moderadores ou admins. Regras claras na landing page para promover um ambiente respeitoso.
+- **Análise de Dados**: Dashboard para admins com estatísticas (ex.: cidades mais ativas, tendências de votações), usando gráficos para insights sobre o uso do site.
+- **Personalização de Perfil**: Usuários podem personalizar perfis com foto, bio e cidades favoritas, e ver um histórico de suas contribuições (pessoas indicadas, comentários feitos).
+- **Modo Offline ou PWA**: Tornar o site uma Progressive Web App (PWA) para acesso offline básico, permitindo leitura de histórias salvas, ideal para áreas com conectividade limitada.
+- **Busca e Filtros Avançados**: Permitir busca por nome, categoria (ex.: "artistas", "líderes comunitários") ou tags personalizadas nas pessoas cadastradas. Filtros por data de nascimento, profissão ou eventos históricos relacionados.
 
 ## Tecnologias Utilizadas
 
-Para começar, você precisará das seguintes tecnologias:
+- Next.js
+- React
+- Prisma
+- MySQL
+- NextAuth.js
+- Armazenamento de Mídias: FTP para fotos e vídeos (URLs armazenadas no banco de dados)
+- [Outras tecnologias]
 
-- **Node.js**: Ambiente de execução JavaScript no servidor.
-- **Next.js**: Framework React para renderização no lado do servidor.
-- **React**: Biblioteca JavaScript para criar interfaces de usuário.
-- **NextAuth.js**: Biblioteca para implementar autenticação segura.
-  - **Nodemailer**: Para o envio de e-mails.
-  - **Credenciais para envio de e-mails no arquivo .env**.
-  - **Banco de dados para NextAuth.js - PostgreSQL**.
+## Estrutura do Projeto
 
-## Como Usar
+[Descrição da estrutura de arquivos e pastas.]
 
-1. Clone este repositório: `git clone https://github.com/tiagogarrais/base-para-aplicativo-web`.
-2. Copie o arquivo .env.example e o renomeie para .env.
-3. Preencha as informações necessárias no arquivo .env.
-4. Execute `npm install` para instalar as dependências.
-5. Execute `npm run dev` para iniciar o servidor de desenvolvimento.
-6. Personalize a interface do usuário e adicione recursos conforme necessário.
-7. Implemente seu aplicativo e comece a usá-lo.
+## Como Executar
+
+[Instruções para rodar o projeto.]
 
 ## Contribuições
 
-Contribuições são bem-vindas! Sinta-se à vontade para fazer melhorias, correções de bugs ou adicionar recursos adicionais a este template. Basta abrir uma issue ou enviar um pull request.
+[Como contribuir.]
 
----
+## Licença
 
-Criado por Tiago das Graças Arrais - [Perfil no GitHub](https://github.com/tiagogarrais)
+[Informações de licença.]
