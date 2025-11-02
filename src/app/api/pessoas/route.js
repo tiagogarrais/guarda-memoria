@@ -54,7 +54,6 @@ export async function GET(request) {
         usuario: { select: { fullName: true } },
         _count: {
           select: {
-            votacoes: true,
             comentarios: true,
             curtidas: true,
             medias: true,
@@ -62,7 +61,6 @@ export async function GET(request) {
         },
       },
       orderBy: [
-        { votacoes: { _count: "desc" } },
         { comentarios: { _count: "desc" } },
         { curtidas: { _count: "desc" } },
         { medias: { _count: "desc" } },
@@ -73,7 +71,6 @@ export async function GET(request) {
     const pessoasComScore = pessoas.map((pessoa) => ({
       ...pessoa,
       score:
-        pessoa._count.votacoes +
         pessoa._count.comentarios +
         pessoa._count.curtidas +
         pessoa._count.medias,
@@ -90,9 +87,7 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
-    console.log("Session in POST /api/pessoas:", session);
     if (!session?.user?.id) {
-      console.log("No session or user.id");
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
@@ -125,9 +120,20 @@ export async function POST(request) {
     }
 
     // Buscar Usuario
-    const usuario = await prisma.usuario.findUnique({
+    let usuario = await prisma.usuario.findUnique({
       where: { userId: session.user.id },
     });
+
+    if (!usuario) {
+      usuario = await prisma.usuario.create({
+        data: {
+          userId: session.user.id,
+          fullName: session.user.name || "",
+          fotoPerfilUrl: session.user.image || "",
+        },
+      });
+    }
+
     if (!usuario) {
       return NextResponse.json(
         { error: "Perfil de usuário não encontrado" },

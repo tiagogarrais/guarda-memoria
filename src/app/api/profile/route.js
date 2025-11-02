@@ -38,61 +38,60 @@ export async function PUT(request) {
   const session = await getServerSession(authOptions);
   if (!session) return new Response("Unauthorized", { status: 401 });
 
-  const {
-    fullName,
-    birthDate,
-    cpf: cpfValue,
-    whatsapp,
-    whatsappCountryCode,
-    whatsappConsent,
-    bio,
-    fotoPerfilUrl,
-    cidadesFavoritas,
-  } = await request.json();
+  try {
+    const {
+      fullName,
+      birthDate,
+      cpf: cpfValue,
+      whatsapp,
+      whatsappCountryCode,
+      whatsappConsent,
+      bio,
+      fotoPerfilUrl,
+      cidadesFavoritas,
+    } = await request.json();
+    const errors = [];
 
-  // Validações detalhadas
-  const errors = [];
-
-  if (!fullName || fullName.trim().length < 2) {
-    errors.push(
-      "Nome completo é obrigatório e deve ter pelo menos 2 caracteres"
-    );
-  }
-
-  if (!birthDate) {
-    errors.push("Data de nascimento é obrigatória");
-  } else {
-    const birthDateObj = new Date(birthDate);
-    const today = new Date();
-    const age = today.getFullYear() - birthDateObj.getFullYear();
-    if (age < 18 || age > 120) {
+    let birthDateObj = null;
+    if (!fullName || fullName.trim().length < 2) {
       errors.push(
-        "Data de nascimento inválida (idade deve ser entre 18 e 120 anos)"
+        "Nome completo é obrigatório e deve ter pelo menos 2 caracteres"
       );
     }
-  }
 
-  if (!cpfValue) {
-    errors.push("CPF é obrigatório");
-  } else if (!isValidCPF(cpfValue)) {
-    errors.push("CPF inválido. Verifique se todos os dígitos estão corretos");
-  }
-
-  // Se houver erros, retornar todos de uma vez
-  if (errors.length > 0) {
-    return new Response(
-      JSON.stringify({
-        success: false,
-        errors: errors,
-      }),
-      {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
+    if (!birthDate) {
+      errors.push("Data de nascimento é obrigatória");
+    } else {
+      birthDateObj = new Date(birthDate);
+      const today = new Date();
+      const age = today.getFullYear() - birthDateObj.getFullYear();
+      if (age < 18 || age > 120) {
+        errors.push(
+          "Data de nascimento inválida (idade deve ser entre 18 e 120 anos)"
+        );
       }
-    );
-  }
+    }
 
-  try {
+    if (!cpfValue) {
+      errors.push("CPF é obrigatório");
+    } else if (!isValidCPF(cpfValue)) {
+      errors.push("CPF inválido. Verifique se todos os dígitos estão corretos");
+    }
+
+    // Se houver erros, retornar todos de uma vez
+    if (errors.length > 0) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          errors: errors,
+        }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     // Primeiro, garantir que existe um usuário na tabela User
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -101,36 +100,42 @@ export async function PUT(request) {
     if (!user) {
       return new Response("Usuário não encontrado", { status: 404 });
     }
+    const upsertData = {};
+
+    if (fullName !== undefined && fullName !== null)
+      upsertData.fullName = fullName;
+    if (birthDateObj) upsertData.birthDate = birthDateObj;
+    if (cpfValue !== undefined && cpfValue !== null) upsertData.cpf = cpfValue;
+    if (whatsapp !== undefined && whatsapp !== null)
+      upsertData.whatsapp = whatsapp;
+    if (whatsappCountryCode !== undefined && whatsappCountryCode !== null)
+      upsertData.whatsappCountryCode = whatsappCountryCode;
+    if (whatsappConsent !== undefined && whatsappConsent !== null)
+      upsertData.whatsappConsent = whatsappConsent;
+    if (bio !== undefined && bio !== null) upsertData.bio = bio;
+    if (fotoPerfilUrl !== undefined && fotoPerfilUrl !== null)
+      upsertData.fotoPerfilUrl = fotoPerfilUrl;
+
+    // Processar cidadesFavoritas
+    if (cidadesFavoritas !== undefined && cidadesFavoritas !== null) {
+      if (typeof cidadesFavoritas === "string") {
+        upsertData.cidadesFavoritas = cidadesFavoritas
+          .split(",")
+          .map((c) => c.trim());
+      } else if (Array.isArray(cidadesFavoritas)) {
+        upsertData.cidadesFavoritas = cidadesFavoritas;
+      }
+    }
+
+    console.log("Dados para upsert (filtrados):", upsertData);
 
     // Atualizar ou criar perfil na tabela Usuario
     const updatedProfile = await prisma.usuario.upsert({
       where: { userId: user.id },
-      update: {
-        fullName,
-        birthDate: new Date(birthDate),
-        cpf: cpfValue,
-        whatsapp,
-        whatsappCountryCode,
-        whatsappConsent,
-        bio,
-        fotoPerfilUrl,
-        cidadesFavoritas: cidadesFavoritas
-          ? cidadesFavoritas.split(",").map((c) => c.trim())
-          : null,
-      },
+      update: upsertData,
       create: {
         userId: user.id,
-        fullName,
-        birthDate: new Date(birthDate),
-        cpf: cpfValue,
-        whatsapp,
-        whatsappCountryCode,
-        whatsappConsent,
-        bio,
-        fotoPerfilUrl,
-        cidadesFavoritas: cidadesFavoritas
-          ? cidadesFavoritas.split(",").map((c) => c.trim())
-          : null,
+        ...upsertData,
       },
     });
 
@@ -179,6 +184,7 @@ export async function GET(request) {
     return new Response(
       JSON.stringify({
         success: true,
+        id: profile?.id || user.id, // Retornar o ID do perfil ou do usuário
         user: {
           fullName: profile?.fullName || "",
           birthDate: profile?.birthDate

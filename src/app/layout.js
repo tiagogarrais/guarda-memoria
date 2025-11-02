@@ -60,7 +60,10 @@ function Header() {
                 Meu Perfil
               </Link>
               <button
-                onClick={() => signOut()}
+                onClick={() => {
+                  localStorage.removeItem("cidadeSelecionada");
+                  signOut();
+                }}
                 style={{
                   backgroundColor: "#dc3545",
                   color: "white",
@@ -75,21 +78,21 @@ function Header() {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => signIn()}
+            <Link
+              href="/auth/signin"
               style={{
                 backgroundColor: "#007bff",
                 color: "white",
-                border: "none",
+                textDecoration: "none",
                 padding: "8px 16px",
                 borderRadius: "4px",
-                cursor: "pointer",
                 fontSize: "14px",
                 fontWeight: "500",
+                display: "inline-block",
               }}
             >
               Entrar
-            </button>
+            </Link>
           )}
         </nav>
       </div>

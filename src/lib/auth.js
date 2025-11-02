@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 import { sendVerificationRequest } from "@/lib/email";
 
 export const authOptions = {
-  adapter: PrismaAdapter(prisma), // Usar adapter padrão temporariamente
+  adapter: PrismaAdapter(prisma),
   debug: process.env.NODE_ENV === "development",
   providers: [
     GoogleProvider({
@@ -31,7 +31,8 @@ export const authOptions = {
     strategy: "database",
   },
   pages: {
-    // you can customize sign in/out/error etc here
+    signIn: "/auth/signin",
+    error: "/auth/error",
   },
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -42,6 +43,27 @@ export const authOptions = {
           userId: user?.id,
           userIdType: typeof user?.id,
         });
+
+        // Criar perfil de usuário se não existir
+        if (user?.email) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { profile: true },
+          });
+
+          if (existingUser && !existingUser.profile) {
+            // Criar perfil na tabela Usuario
+            await prisma.usuario.create({
+              data: {
+                userId: existingUser.id,
+                fullName: user.name || "",
+                fotoPerfilUrl: user.image || "",
+              },
+            });
+            console.log("Perfil de usuário criado para:", user.email);
+          }
+        }
+
         return true;
       } catch (error) {
         console.error("Erro no callback signIn:", error);

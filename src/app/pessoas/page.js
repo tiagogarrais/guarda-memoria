@@ -71,25 +71,6 @@ function PessoasContent() {
     }
   };
 
-  const handleVotar = async (pessoaId) => {
-    try {
-      const response = await fetch("/api/votacoes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pessoaId }),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        alert(errorData.error || "Erro ao votar");
-        return;
-      }
-      alert("Voto registrado!");
-      fetchPessoas(); // Recarregar para atualizar ranking
-    } catch (err) {
-      alert("Erro ao votar");
-    }
-  };
-
   if (!session || !cidadeId) {
     return <div>Carregando...</div>;
   }
@@ -111,20 +92,22 @@ function PessoasContent() {
     >
       <h1>Pessoas de {cidadeNome || "sua cidade"}</h1>
       <div style={{ marginBottom: "20px" }}>
-        <Link href="/selecionar-localizacao">
-          <button
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          >
-            Trocar Cidade
-          </button>
-        </Link>
+        <button
+          onClick={() => {
+            localStorage.removeItem("cidadeSelecionada");
+            router.push("/selecionar-localizacao");
+          }}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: 4,
+            cursor: "pointer",
+          }}
+        >
+          Trocar Cidade
+        </button>
         <Link href={`/indicar-pessoa?cidadeId=${cidadeId}`}>
           <button
             style={{
@@ -359,19 +342,6 @@ function PessoasContent() {
                   <p>Score: {pessoa.score}</p>
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <button
-                    onClick={() => handleVotar(pessoa.id)}
-                    style={{
-                      padding: "8px 16px",
-                      backgroundColor: "#ffc107",
-                      color: "black",
-                      border: "none",
-                      borderRadius: 4,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Votar
-                  </button>
                   <Link href={`/pessoa/${pessoa.id}`}>
                     <button
                       style={{

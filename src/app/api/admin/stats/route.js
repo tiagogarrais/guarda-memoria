@@ -20,7 +20,6 @@ export async function GET(request) {
     // Estatísticas básicas
     const totalPessoas = await prisma.pessoa.count();
     const totalComentarios = await prisma.comentario.count();
-    const totalVotacoes = await prisma.votacao.count();
     const totalCurtidas = await prisma.curtida.count();
     const totalDenuncias = await prisma.denuncia.count();
     const denunciasPendentes = await prisma.denuncia.count({
@@ -67,7 +66,6 @@ export async function GET(request) {
     return NextResponse.json({
       totalPessoas,
       totalComentarios,
-      totalVotacoes,
       totalCurtidas,
       totalDenuncias,
       denunciasPendentes,

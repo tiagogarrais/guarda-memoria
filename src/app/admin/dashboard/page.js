@@ -90,19 +90,6 @@ export default function AdminDashboard() {
             textAlign: "center",
           }}
         >
-          <h3>Total de Votações</h3>
-          <p style={{ fontSize: "2em", fontWeight: "bold" }}>
-            {stats.totalVotacoes}
-          </p>
-        </div>
-        <div
-          style={{
-            border: "1px solid #ddd",
-            padding: "16px",
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
           <h3>Total de Curtidas</h3>
           <p style={{ fontSize: "2em", fontWeight: "bold" }}>
             {stats.totalCurtidas}

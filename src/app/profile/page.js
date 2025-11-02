@@ -17,13 +17,17 @@ export default function Profile() {
     whatsappConsent: false,
     bio: "",
     fotoPerfilUrl: "",
-    cidadesFavoritas: "",
+    cidadesFavoritas: [], // Agora será um array de objetos {stateId, cityId, stateName, cityName}
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
   const [countries, setCountries] = useState([]);
+  const [states, setStates] = useState({});
+  const [cities, setCities] = useState([]);
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
 
-  // Buscar lista de países
+  // Buscar lista de países e dados de estados/cidades
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -36,7 +40,22 @@ export default function Profile() {
         console.error("Erro ao buscar países:", error);
       }
     };
+
+    const fetchStatesAndCities = async () => {
+      try {
+        const res = await fetch("/estados-cidades2.json");
+        if (res.ok) {
+          const data = await res.json();
+          setStates(data.states);
+          setCities(data.cities);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar estados e cidades:", error);
+      }
+    };
+
     fetchCountries();
+    fetchStatesAndCities();
   }, []);
 
   useEffect(() => {
@@ -49,6 +68,27 @@ export default function Profile() {
         const res = await fetch("/api/profile");
         if (res.ok) {
           const data = await res.json();
+          // Converter cidades favoritas do formato array para o formato esperado
+          const cidadesFavoritasArray = data.user.cidadesFavoritas
+            ? data.user.cidadesFavoritas
+                .map((cityName) => {
+                  // Tentar encontrar a cidade no array de cidades
+                  const cityData = cities.find(
+                    (city) => city.name === cityName.trim()
+                  );
+                  if (cityData) {
+                    return {
+                      stateId: cityData.state_id,
+                      cityId: cityData.id,
+                      stateName: states[cityData.state_id.toString()],
+                      cityName: cityData.name,
+                    };
+                  }
+                  return null;
+                })
+                .filter(Boolean)
+            : [];
+
           setFormData({
             fullName: data.user.fullName || session.user.name || "",
             birthDate: data.user.birthDate || "",
@@ -58,12 +98,29 @@ export default function Profile() {
             whatsappConsent: data.user.whatsappConsent || false,
             bio: data.user.bio || "",
             fotoPerfilUrl: data.user.fotoPerfilUrl || "",
-            cidadesFavoritas: data.user.cidadesFavoritas
-              ? data.user.cidadesFavoritas.join(", ")
-              : "",
+            cidadesFavoritas: cidadesFavoritasArray,
           });
         } else {
           // Se não conseguir buscar, usar dados da sessão como fallback
+          const cidadesFavoritasArray = session.user.cidadesFavoritas
+            ? session.user.cidadesFavoritas
+                .map((cityName) => {
+                  const cityData = cities.find(
+                    (city) => city.name === cityName.trim()
+                  );
+                  if (cityData) {
+                    return {
+                      stateId: cityData.state_id,
+                      cityId: cityData.id,
+                      stateName: states[cityData.state_id.toString()],
+                      cityName: cityData.name,
+                    };
+                  }
+                  return null;
+                })
+                .filter(Boolean)
+            : [];
+
           setFormData({
             fullName: session.user.fullName || session.user.name || "",
             birthDate: session.user.birthDate
@@ -75,14 +132,31 @@ export default function Profile() {
             whatsappConsent: session.user.whatsappConsent || false,
             bio: session.user.bio || "",
             fotoPerfilUrl: session.user.fotoPerfilUrl || "",
-            cidadesFavoritas: session.user.cidadesFavoritas
-              ? session.user.cidadesFavoritas.join(", ")
-              : "",
+            cidadesFavoritas: cidadesFavoritasArray,
           });
         }
       } catch (error) {
         console.error("Erro ao buscar perfil:", error);
         // Fallback para dados da sessão
+        const cidadesFavoritasArray = session.user.cidadesFavoritas
+          ? session.user.cidadesFavoritas
+              .map((cityName) => {
+                const cityData = cities.find(
+                  (city) => city.name === cityName.trim()
+                );
+                if (cityData) {
+                  return {
+                    stateId: cityData.state_id,
+                    cityId: cityData.id,
+                    stateName: states[cityData.state_id.toString()],
+                    cityName: cityData.name,
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean)
+          : [];
+
         setFormData({
           fullName: session.user.fullName || session.user.name || "",
           birthDate: session.user.birthDate
@@ -93,9 +167,7 @@ export default function Profile() {
           whatsappConsent: session.user.whatsappConsent || false,
           bio: session.user.bio || "",
           fotoPerfilUrl: session.user.fotoPerfilUrl || "",
-          cidadesFavoritas: session.user.cidadesFavoritas
-            ? session.user.cidadesFavoritas.join(", ")
-            : "",
+          cidadesFavoritas: cidadesFavoritasArray,
         });
       }
     };
@@ -103,15 +175,73 @@ export default function Profile() {
     fetchProfile();
   }, [session, status, router]);
 
+  // Funções para gerenciar cidades favoritas
+  const addCidadeFavorita = () => {
+    if (!selectedState || !selectedCity) return;
+
+    const stateName = states[selectedState];
+    const cityData = cities.find((city) => city.id.toString() === selectedCity);
+
+    if (!cityData || !stateName) return;
+
+    // Verificar se a cidade já foi adicionada
+    const alreadyExists = formData.cidadesFavoritas.some(
+      (cidade) => cidade.cityId === cityData.id
+    );
+
+    if (alreadyExists) {
+      alert("Esta cidade já foi adicionada às favoritas!");
+      return;
+    }
+
+    const newCidade = {
+      stateId: parseInt(selectedState),
+      cityId: cityData.id,
+      stateName,
+      cityName: cityData.name,
+    };
+
+    setFormData({
+      ...formData,
+      cidadesFavoritas: [...formData.cidadesFavoritas, newCidade],
+    });
+
+    // Limpar selects
+    setSelectedState("");
+    setSelectedCity("");
+  };
+
+  const removeCidadeFavorita = (cityId) => {
+    setFormData({
+      ...formData,
+      cidadesFavoritas: formData.cidadesFavoritas.filter(
+        (cidade) => cidade.cityId !== cityId
+      ),
+    });
+  };
+
+  // Filtrar cidades do estado selecionado
+  const cidadesDoEstado = selectedState
+    ? cities.filter((city) => city.state_id.toString() === selectedState)
+    : [];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrors([]); // Limpar erros anteriores
 
+    // Preparar dados para envio - converter cidades favoritas para array de strings
+    const dataToSend = {
+      ...formData,
+      cidadesFavoritas: formData.cidadesFavoritas.map(
+        (cidade) => cidade.cityName
+      ),
+    };
+
     const res = await fetch("/api/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(dataToSend),
     });
 
     if (res.ok) {
@@ -326,16 +456,104 @@ export default function Profile() {
         </label>
 
         <label>
-          Cidades Favoritas (separadas por vírgula, opcional):
-          <input
-            type="text"
-            value={formData.cidadesFavoritas}
-            onChange={(e) =>
-              setFormData({ ...formData, cidadesFavoritas: e.target.value })
-            }
-            placeholder="São Paulo, Rio de Janeiro"
-            style={{ padding: 8, width: "100%" }}
-          />
+          Cidades Favoritas (opcional):
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+              <select
+                value={selectedState}
+                onChange={(e) => {
+                  setSelectedState(e.target.value);
+                  setSelectedCity(""); // Limpar cidade quando estado muda
+                }}
+                style={{ padding: 8, flex: 1 }}
+              >
+                <option value="">Selecione um estado</option>
+                {Object.entries(states).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                disabled={!selectedState}
+                style={{ padding: 8, flex: 1 }}
+              >
+                <option value="">
+                  {selectedState
+                    ? "Selecione uma cidade"
+                    : "Selecione um estado primeiro"}
+                </option>
+                {cidadesDoEstado.map((city) => (
+                  <option key={city.id} value={city.id.toString()}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={addCidadeFavorita}
+                disabled={!selectedState || !selectedCity}
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor:
+                    !selectedState || !selectedCity ? "#ccc" : "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor:
+                    !selectedState || !selectedCity ? "not-allowed" : "pointer",
+                }}
+              >
+                Adicionar
+              </button>
+            </div>
+
+            {formData.cidadesFavoritas.length > 0 && (
+              <div>
+                <p style={{ marginBottom: 8, fontWeight: "bold" }}>
+                  Cidades selecionadas:
+                </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {formData.cidadesFavoritas.map((cidade) => (
+                    <div
+                      key={cidade.cityId}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        padding: "4px 8px",
+                        backgroundColor: "#f8f9fa",
+                        border: "1px solid #dee2e6",
+                        borderRadius: 4,
+                      }}
+                    >
+                      <span>
+                        {cidade.cityName} - {cidade.stateName}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeCidadeFavorita(cidade.cityId)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#dc3545",
+                          cursor: "pointer",
+                          fontSize: "16px",
+                          padding: 0,
+                        }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </label>
 
         <button

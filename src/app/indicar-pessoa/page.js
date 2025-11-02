@@ -84,9 +84,6 @@ function IndicarPessoaContent() {
     >
       <h1>Indicar Pessoa</h1>
       <p>Compartilhe a história de alguém que marcou sua cidade.</p>
-      <p style={{ color: "red", fontWeight: "bold" }}>
-        Lembre-se: Tudo que você fizer é sua responsabilidade.
-      </p>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 

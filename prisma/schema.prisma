@@ -66,7 +66,6 @@ model Usuario {
   pessoas      Pessoa[]
   comentarios  Comentario[]
   medias       Media[]
-  votacoes     Votacao[]
   curtidas     Curtida[]
   logs         Log[]
   denuncias    Denuncia[]
@@ -111,7 +110,6 @@ model Pessoa {
   usuario    Usuario     @relation(fields: [usuarioId], references: [id])
   comentarios Comentario[]
   medias     Media[]
-  votacoes   Votacao[]
   curtidas   Curtida[]
   denuncias Denuncia[] @relation("DenunciaPessoa") // Denúncias sobre a pessoa
 
@@ -146,18 +144,6 @@ model Media {
   @@index([pessoaId])
 }
 
-model Votacao {
-  pessoaId  String
-  usuarioId String
-  createdAt DateTime @default(now())
-
-  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
-
-  @@unique([pessoaId, usuarioId]) // Uma votação por usuário/pessoa
-  @@index([pessoaId])
-}
-
 model Curtida {
   pessoaId  String
   usuarioId String
@@ -173,7 +159,7 @@ model Curtida {
 model Log {
   id        String   @id @default(uuid())
   usuarioId String?
-  acao      String   // Ex.: "cadastro_pessoa", "comentario", "votacao"
+  acao      String   // Ex.: "cadastro_pessoa", "comentario", "curtida"
   detalhes  String?  @db.Text // JSON com detalhes
   timestamp DateTime @default(now())
 

@@ -1,36 +1,76 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
+  const [cidadeSelecionada, setCidadeSelecionada] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
-  if (session) {
-    // Redirecionar para seleção de localização se logado
+  useEffect(() => {
+    // Verificar se há cidade selecionada no localStorage
+    const cidadeSalva = localStorage.getItem("cidadeSelecionada");
+    if (cidadeSalva) {
+      try {
+        const cidade = JSON.parse(cidadeSalva);
+        setCidadeSelecionada(cidade);
+      } catch (error) {
+        console.error("Erro ao parsear cidade salva:", error);
+        localStorage.removeItem("cidadeSelecionada");
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    // Se usuário está logado e tem cidade selecionada, redirecionar para pessoas
+    if (session && cidadeSelecionada && !loading) {
+      router.push(`/pessoas?cidadeId=${cidadeSelecionada.id}`);
+    }
+  }, [session, cidadeSelecionada, loading, router]);
+
+  if (loading) {
     return (
       <div style={{ textAlign: "center", padding: "50px" }}>
-        <h1>Bem-vindo ao Guarda Memória!</h1>
-        <p>Você está logado. Escolha sua cidade para começar.</p>
-        <Link href="/selecionar-localizacao">
-          <button
-            style={{
-              padding: "12px 24px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-              fontSize: "16px",
-            }}
-          >
-            Selecionar Cidade
-          </button>
-        </Link>
+        <p>Carregando...</p>
       </div>
     );
+  }
+
+  if (session) {
+    // Se tem cidade selecionada, já redirecionou no useEffect
+    // Se não tem, mostrar opção de selecionar
+    if (!cidadeSelecionada) {
+      return (
+        <div style={{ textAlign: "center", padding: "50px" }}>
+          <h1>Bem-vindo ao Guarda Memória!</h1>
+          <p>Você está logado. Escolha sua cidade para começar.</p>
+          <Link href="/selecionar-localizacao">
+            <button
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                borderRadius: 4,
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
+              Selecionar Cidade
+            </button>
+          </Link>
+        </div>
+      );
+    }
+
+    // Este código não deve ser alcançado devido ao redirecionamento no useEffect
+    return null;
   }
 
   return (
@@ -61,7 +101,7 @@ export default function Home() {
         <p>
           O Guarda Memória é um site estilo rede social dedicado a preservar e
           compartilhar essas histórias. Aqui, você pode indicar pessoas
-          conhecidas, votar nas mais lembradas e contribuir com comentários e
+          conhecidas, curtir as mais lembradas e contribuir com comentários e
           materiais.
         </p>
         <p>
@@ -79,7 +119,7 @@ export default function Home() {
           borderRadius: "8px",
         }}
       >
-        <h2>Regras e Responsabilidades</h2>
+        <h2>Regras</h2>
         <ul>
           <li>
             Seja respeitoso: Não publique conteúdo ofensivo, discriminatório ou
@@ -92,11 +132,6 @@ export default function Home() {
             Privacidade: Não compartilhe informações pessoais sem consentimento.
           </li>
           <li>Moderação: Denúncias serão revisadas por administradores.</li>
-          <li>
-            <strong>Responsabilidade:</strong> Tudo que você fizer é sua
-            responsabilidade. O site não se responsabiliza por conteúdos
-            publicados.
-          </li>
         </ul>
       </section>
 

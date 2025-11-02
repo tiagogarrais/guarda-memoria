@@ -21,7 +21,6 @@ O site promove a conexão intergeracional através de histórias compartilhadas.
 - **Pódio das Top 3 por Cidade**: Destaque visual para as três pessoas mais conhecidas da cidade no início da página.
 - **Interação Social**: Possibilidade de curtir, comentar ou compartilhar histórias.
 - **Página de Detalhes da Pessoa**: Ao clicar em uma pessoa, abre uma página estilo fórum com comentários, áudios, vídeos, relatos e materiais enviados pelos usuários.
-- **Avisos de Responsabilidade**: Em todas as páginas de interação, avisos como "Tudo que você fizer é sua responsabilidade".
 - **Sistema de Logs**: Registro de todas as ações dos usuários (cadastros, comentários, uploads, etc.) para rastreabilidade e auditoria.
 - **Moderação Comunitária**: Sistema de denúncias para conteúdos inadequados, com revisão por moderadores ou admins. Regras claras na landing page para promover um ambiente respeitoso.
 - **Análise de Dados**: Dashboard para admins com estatísticas (ex.: cidades mais ativas, tendências de votações), usando gráficos para insights sobre o uso do site.

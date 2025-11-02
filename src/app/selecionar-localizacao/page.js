@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import estadosCidades from "../../../estados-cidades2.json";
 
 export default function SelecionarLocalizacao() {
   const { data: session } = useSession();
@@ -11,12 +10,32 @@ export default function SelecionarLocalizacao() {
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState([]);
+  const [estadosCidades, setEstadosCidades] = useState({
+    states: {},
+    cities: [],
+  });
 
   useEffect(() => {
     if (!session) {
       router.push("/");
     }
   }, [session, router]);
+
+  useEffect(() => {
+    const fetchEstadosCidades = async () => {
+      try {
+        const res = await fetch("/estados-cidades2.json");
+        if (res.ok) {
+          const data = await res.json();
+          setEstadosCidades(data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar estados e cidades:", error);
+      }
+    };
+
+    fetchEstadosCidades();
+  }, []);
 
   useEffect(() => {
     if (estado) {
@@ -46,6 +65,17 @@ export default function SelecionarLocalizacao() {
         throw new Error("Erro ao buscar cidade");
       }
       const cidadeData = await response.json();
+
+      // Salvar cidade selecionada no localStorage
+      localStorage.setItem(
+        "cidadeSelecionada",
+        JSON.stringify({
+          id: cidadeData.id,
+          nome: cidadeData.nome,
+          estado: cidadeData.estado,
+        })
+      );
+
       // Redirecionar para /pessoas?cidadeId=...
       router.push(`/pessoas?cidadeId=${cidadeData.id}`);
     } catch (error) {
