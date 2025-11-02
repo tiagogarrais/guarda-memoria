@@ -50,18 +50,23 @@ export const authOptions = {
     },
     async session({ session, token }) {
       try {
-        if (token && token.id) {
-          console.log(
-            "Session callback - token.id:",
-            token.id,
-            "type:",
-            typeof token.id
-          );
+        // Para database sessions, o id pode não vir no token, buscar pelo email
+        if (session.user.email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: session.user.email },
+          });
+          if (dbUser) {
+            session.user.id = dbUser.id;
+          }
+        } else if (token && token.id) {
           session.user.id = token.id;
-          // Adicionar campos do perfil da tabela Usuario
+        }
+
+        // Adicionar campos do perfil da tabela Usuario
+        if (session.user.id) {
           try {
             const profile = await prisma.usuario.findUnique({
-              where: { userId: token.id },
+              where: { userId: session.user.id },
             });
             if (profile) {
               session.user = {
@@ -76,13 +81,11 @@ export const authOptions = {
             }
           } catch (dbError) {
             console.error("Erro ao buscar dados do usuário no banco:", dbError);
-            // Continuar sem os dados extras do perfil
           }
         }
         return session;
       } catch (error) {
         console.error("Erro no callback de sessão:", error);
-        // Retornar sessão sem campos extras em caso de erro
         return session;
       }
     },

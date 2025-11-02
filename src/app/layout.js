@@ -3,6 +3,7 @@
 import { SessionProvider } from "next-auth/react";
 import Link from "next/link";
 import { useSession, signOut, signIn } from "next-auth/react";
+import { useEffect } from "react";
 import "./globals.css";
 
 function Header() {
@@ -40,7 +41,7 @@ function Header() {
             fontWeight: "bold",
           }}
         >
-          Base para aplicativo web
+          Guarda Memória
         </Link>
 
         <nav>
@@ -119,15 +120,32 @@ function Footer() {
           fontSize: "14px",
         }}
       >
-        © 2025 Base para aplicativo web. Todos os direitos reservados.
+        © 2025 Guarda Memória. Todos os direitos reservados.
       </div>
     </footer>
   );
 }
 
 export default function RootLayout({ children }) {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/sw.js")
+        .then((registration) => {
+          console.log("SW registered: ", registration);
+        })
+        .catch((error) => {
+          console.log("SW registration failed: ", error);
+        });
+    }
+  }, []);
+
   return (
     <html lang="pt-BR">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#007bff" />
+      </head>
       <body style={{ margin: 0, padding: 0 }}>
         <SessionProvider>
           <Header />

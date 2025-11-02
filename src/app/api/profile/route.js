@@ -45,6 +45,9 @@ export async function PUT(request) {
     whatsapp,
     whatsappCountryCode,
     whatsappConsent,
+    bio,
+    fotoPerfilUrl,
+    cidadesFavoritas,
   } = await request.json();
 
   // Validações detalhadas
@@ -109,6 +112,11 @@ export async function PUT(request) {
         whatsapp,
         whatsappCountryCode,
         whatsappConsent,
+        bio,
+        fotoPerfilUrl,
+        cidadesFavoritas: cidadesFavoritas
+          ? cidadesFavoritas.split(",").map((c) => c.trim())
+          : null,
       },
       create: {
         userId: user.id,
@@ -118,6 +126,11 @@ export async function PUT(request) {
         whatsapp,
         whatsappCountryCode,
         whatsappConsent,
+        bio,
+        fotoPerfilUrl,
+        cidadesFavoritas: cidadesFavoritas
+          ? cidadesFavoritas.split(",").map((c) => c.trim())
+          : null,
       },
     });
 
@@ -131,6 +144,9 @@ export async function PUT(request) {
           whatsapp: updatedProfile.whatsapp,
           whatsappCountryCode: updatedProfile.whatsappCountryCode,
           whatsappConsent: updatedProfile.whatsappConsent,
+          bio: updatedProfile.bio,
+          fotoPerfilUrl: updatedProfile.fotoPerfilUrl,
+          cidadesFavoritas: updatedProfile.cidadesFavoritas,
         },
       }),
       { status: 200 }

@@ -56,10 +56,20 @@ model Usuario {
   whatsapp          String?  // Número de WhatsApp (opcional)
   whatsappCountryCode String? @default("55") // Código DDI do país (padrão Brasil)
   whatsappConsent   Boolean  @default(false) // Consentimento para comunicações
+  bio               String?  @db.Text // Bio do perfil
+  fotoPerfilUrl     String?  // URL da foto de perfil via FTP
+  cidadesFavoritas  String?  @db.Text // JSON array de cidades favoritas
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pessoas      Pessoa[]
+  comentarios  Comentario[]
+  medias       Media[]
+  votacoes     Votacao[]
+  curtidas     Curtida[]
+  logs         Log[]
+  denuncias    Denuncia[]
 }
 
 model VerificationToken {
@@ -68,4 +78,125 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// Novas tabelas para Guarda Memória
+
+model Cidade {
+  id         String @id @default(uuid())
+  estado     String // Ex.: "SP"
+  nome       String // Ex.: "São Paulo"
+  codigoIbge String? @unique // Opcional, para referência
+
+  pessoas Pessoa[]
+
+  @@unique([estado, nome])
+}
+
+model Pessoa {
+  id             String   @id @default(uuid())
+  nome           String
+  historia       String?  @db.Text
+  fotoUrl        String?  // URL da foto via FTP
+  cidadeId       String
+  usuarioId      String   // Quem indicou
+  dataNascimento DateTime?
+  profissao      String?
+  categoria      String?  // Ex.: "artista", "líder comunitário"
+  tags           String?  @db.Text // JSON array de tags
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  cidade     Cidade      @relation(fields: [cidadeId], references: [id])
+  usuario    Usuario     @relation(fields: [usuarioId], references: [id])
+  comentarios Comentario[]
+  medias     Media[]
+  votacoes   Votacao[]
+  curtidas   Curtida[]
+  denuncias Denuncia[] @relation("DenunciaPessoa") // Denúncias sobre a pessoa
+
+  @@index([cidadeId])
+}
+
+model Comentario {
+  id        String   @id @default(uuid())
+  pessoaId  String
+  usuarioId String
+  texto     String   @db.Text
+  createdAt DateTime @default(now())
+
+  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  denuncias Denuncia[] @relation("DenunciaComentario") // Denúncias sobre o comentário
+
+  @@index([pessoaId])
+}
+
+model Media {
+  id        String   @id @default(uuid())
+  pessoaId  String
+  usuarioId String
+  tipo      String   // "foto", "video", "audio"
+  url       String   // URL via FTP
+  createdAt DateTime @default(now())
+
+  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([pessoaId])
+}
+
+model Votacao {
+  pessoaId  String
+  usuarioId String
+  createdAt DateTime @default(now())
+
+  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@unique([pessoaId, usuarioId]) // Uma votação por usuário/pessoa
+  @@index([pessoaId])
+}
+
+model Curtida {
+  pessoaId  String
+  usuarioId String
+  createdAt DateTime @default(now())
+
+  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@unique([pessoaId, usuarioId]) // Uma curtida por usuário/pessoa
+  @@index([pessoaId])
+}
+
+model Log {
+  id        String   @id @default(uuid())
+  usuarioId String?
+  acao      String   // Ex.: "cadastro_pessoa", "comentario", "votacao"
+  detalhes  String?  @db.Text // JSON com detalhes
+  timestamp DateTime @default(now())
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([timestamp])
+}
+
+model Denuncia {
+  id           String   @id @default(uuid())
+  pessoaId     String?
+  comentarioId String?
+  usuarioId    String   // Quem denunciou
+  motivo       String   @db.Text
+  status       String   @default("pendente") // "pendente", "resolvido", "rejeitado"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  pessoa     Pessoa?     @relation("DenunciaPessoa", fields: [pessoaId], references: [id], map: "DenunciaPessoa_fkey")
+  comentario Comentario? @relation("DenunciaComentario", fields: [comentarioId], references: [id], map: "DenunciaComentario_fkey")
+  usuario    Usuario     @relation(fields: [usuarioId], references: [id])
+
+  @@index([pessoaId])
+  @@index([comentarioId])
 }

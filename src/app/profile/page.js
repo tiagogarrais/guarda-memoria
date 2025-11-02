@@ -15,6 +15,9 @@ export default function Profile() {
     whatsapp: "",
     whatsappCountryCode: "55", // Padrão Brasil
     whatsappConsent: false,
+    bio: "",
+    fotoPerfilUrl: "",
+    cidadesFavoritas: "",
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -53,6 +56,11 @@ export default function Profile() {
             whatsapp: data.user.whatsapp || "",
             whatsappCountryCode: data.user.whatsappCountryCode || "55",
             whatsappConsent: data.user.whatsappConsent || false,
+            bio: data.user.bio || "",
+            fotoPerfilUrl: data.user.fotoPerfilUrl || "",
+            cidadesFavoritas: data.user.cidadesFavoritas
+              ? data.user.cidadesFavoritas.join(", ")
+              : "",
           });
         } else {
           // Se não conseguir buscar, usar dados da sessão como fallback
@@ -65,6 +73,11 @@ export default function Profile() {
             whatsapp: session.user.whatsapp || "",
             whatsappCountryCode: session.user.whatsappCountryCode || "55",
             whatsappConsent: session.user.whatsappConsent || false,
+            bio: session.user.bio || "",
+            fotoPerfilUrl: session.user.fotoPerfilUrl || "",
+            cidadesFavoritas: session.user.cidadesFavoritas
+              ? session.user.cidadesFavoritas.join(", ")
+              : "",
           });
         }
       } catch (error) {
@@ -78,6 +91,11 @@ export default function Profile() {
           cpf: session.user.cpf || "",
           whatsapp: session.user.whatsapp || "",
           whatsappConsent: session.user.whatsappConsent || false,
+          bio: session.user.bio || "",
+          fotoPerfilUrl: session.user.fotoPerfilUrl || "",
+          cidadesFavoritas: session.user.cidadesFavoritas
+            ? session.user.cidadesFavoritas.join(", ")
+            : "",
         });
       }
     };
@@ -282,6 +300,44 @@ export default function Profile() {
           />
           Concordo em receber comunicações via WhatsApp
         </label>
+
+        <label>
+          Bio (opcional):
+          <textarea
+            value={formData.bio}
+            onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+            rows={3}
+            placeholder="Conte um pouco sobre você..."
+            style={{ padding: 8, width: "100%" }}
+          />
+        </label>
+
+        <label>
+          URL da Foto de Perfil (opcional):
+          <input
+            type="url"
+            value={formData.fotoPerfilUrl}
+            onChange={(e) =>
+              setFormData({ ...formData, fotoPerfilUrl: e.target.value })
+            }
+            placeholder="https://exemplo.com/foto.jpg"
+            style={{ padding: 8, width: "100%" }}
+          />
+        </label>
+
+        <label>
+          Cidades Favoritas (separadas por vírgula, opcional):
+          <input
+            type="text"
+            value={formData.cidadesFavoritas}
+            onChange={(e) =>
+              setFormData({ ...formData, cidadesFavoritas: e.target.value })
+            }
+            placeholder="São Paulo, Rio de Janeiro"
+            style={{ padding: 8, width: "100%" }}
+          />
+        </label>
+
         <button
           type="submit"
           disabled={loading}
@@ -297,6 +353,15 @@ export default function Profile() {
           {loading ? "Salvando..." : "Salvar Perfil"}
         </button>
       </form>
+
+      {/* Seção de Histórico */}
+      <section style={{ marginTop: 40 }}>
+        <h2>Seu Histórico de Contribuições</h2>
+        <p>
+          Em desenvolvimento: Aqui aparecerá uma lista de pessoas que você
+          indicou, comentários feitos, etc.
+        </p>
+      </section>
     </div>
   );
 }

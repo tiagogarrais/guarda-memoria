@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "prisma generate && prisma migrate dev && next dev -p 3000",
+    "dev": "prisma generate && next dev -p 3000",
     "build": "prisma generate && prisma db push && next build",
     "start": "next start -p 3000",
     "prisma:generate": "prisma generate",
@@ -19,7 +19,8 @@
     "pg": "^8.11.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-input-mask": "^2.0.4"
+    "react-input-mask": "^2.0.4",
+    "recharts": "^3.3.0"
   },
   "devDependencies": {
     "prisma": "^6.18.0"
