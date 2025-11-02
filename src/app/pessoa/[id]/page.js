@@ -18,6 +18,7 @@ export default function PessoaDetalhes() {
   const [uploadType, setUploadType] = useState("foto");
   const [uploading, setUploading] = useState(false);
   const [medias, setMedias] = useState([]);
+  const [jaCurtiu, setJaCurtiu] = useState(false);
 
   useEffect(() => {
     if (!session) {
@@ -167,6 +168,27 @@ export default function PessoaDetalhes() {
       alert("Erro no upload");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDenunciar = async () => {
+    const motivo = prompt("Por que você quer denunciar esta pessoa?");
+    if (!motivo || !motivo.trim()) return;
+
+    try {
+      const response = await fetch("/api/denuncias", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pessoaId: id, motivo: motivo.trim() }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(errorData.error || "Erro ao denunciar");
+        return;
+      }
+      alert("Denúncia enviada com sucesso!");
+    } catch (err) {
+      alert("Erro ao denunciar");
     }
   };
 

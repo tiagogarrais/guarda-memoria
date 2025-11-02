@@ -63,7 +63,17 @@ function PessoasContent() {
       const response = await fetch(`/api/pessoas?${params}`);
       if (!response.ok) throw new Error("Erro ao buscar pessoas");
       const data = await response.json();
-      setPessoas(data);
+      
+      // Filtrar pessoas com IDs válidos
+      const pessoasValidas = data.filter(pessoa => 
+        pessoa.id && 
+        typeof pessoa.id === 'string' && 
+        pessoa.id.length > 0 && 
+        !pessoa.id.includes('<') && 
+        !pessoa.id.includes('>')
+      );
+      
+      setPessoas(pessoasValidas);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -305,6 +315,7 @@ function PessoasContent() {
                       borderRadius: 4,
                       cursor: "pointer",
                     }}
+                    disabled={!pessoa.id || pessoa.id.includes('<') || pessoa.id.includes('>')}
                   >
                     Ver Detalhes
                   </button>
@@ -352,6 +363,7 @@ function PessoasContent() {
                         borderRadius: 4,
                         cursor: "pointer",
                       }}
+                      disabled={!pessoa.id || pessoa.id.includes('<') || pessoa.id.includes('>')}
                     >
                       Ver Detalhes
                     </button>
