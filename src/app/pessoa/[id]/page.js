@@ -153,6 +153,7 @@ export default function PessoaDetalhes() {
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
+        credentials: "include", // Importante para enviar cookies de sessão
       });
 
       if (!response.ok) {

@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { Client } from "basic-ftp";
 import { randomUUID } from "crypto";
 import path from "path";
+import { Readable } from "stream";
+import { PrismaClient } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,7 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const pessoaId = formData.get("pessoaId");
-    const tipo = formData.get("tipo"); // "foto", "video", "audio"
+    const tipo = formData.get("tipo");
 
     if (!file || !pessoaId || !tipo) {
       return NextResponse.json(
@@ -51,7 +53,7 @@ export async function POST(request) {
 
     // Conectar ao FTP
     const client = new Client();
-    client.ftp.verbose = false; // Desabilitar logs detalhados
+    client.ftp.verbose = false;
 
     try {
       await client.access({
@@ -61,16 +63,52 @@ export async function POST(request) {
         port: parseInt(process.env.FTP_PORT) || 21,
       });
 
-      // Criar diretório da pessoa se não existir
-      const pessoaDir = `${process.env.FTP_BASE_PATH}/${pessoaId}`;
-      const tipoDir =
-        tipo === "foto" ? "fotos" : tipo === "video" ? "videos" : "audios";
-      const fullPath = `${pessoaDir}/${tipoDir}`;
+      // Tentar navegar para public_html se existir
+      try {
+        await client.cd("public_html");
+        console.log("Navegou para public_html");
+      } catch (error) {
+        // Se não conseguir, já estamos no diretório correto
+        console.log("Já estamos no diretório raiz do site");
+      }
+
+      // Navegar para o diretório base configurado
+      const basePath = process.env.FTP_BASE_PATH || "guarda-memoria";
 
       try {
-        await client.ensureDir(fullPath);
+        await client.cd(basePath);
       } catch (error) {
-        console.error("Erro ao criar diretório:", error);
+        try {
+          await client.send(`MKD ${basePath}`);
+          await client.cd(basePath);
+        } catch (createError) {
+          return NextResponse.json(
+            { error: "Erro ao criar/acessar diretório base no servidor" },
+            { status: 500 }
+          );
+        }
+      } // Criar diretório da pessoa se não existir
+      const pessoaDir = pessoaId;
+      const tipoDir =
+        tipo === "foto" ? "fotos" : tipo === "video" ? "videos" : "audios";
+
+      try {
+        // Criar diretório da pessoa
+        try {
+          await client.send(`MKD ${pessoaDir}`);
+        } catch (error) {
+          // Diretório pode já existir
+        }
+        await client.cd(pessoaDir);
+
+        // Criar subdiretório do tipo
+        try {
+          await client.send(`MKD ${tipoDir}`);
+        } catch (error) {
+          // Diretório pode já existir
+        }
+        await client.cd(tipoDir);
+      } catch (error) {
         return NextResponse.json(
           { error: "Erro ao criar diretório no servidor" },
           { status: 500 }
@@ -80,19 +118,19 @@ export async function POST(request) {
       // Gerar nome único para o arquivo
       const fileExtension = path.extname(file.name);
       const fileName = `${randomUUID()}${fileExtension}`;
-      const remotePath = `${fullPath}/${fileName}`;
+      const remotePath = fileName;
 
       // Converter o arquivo para buffer
       const buffer = Buffer.from(await file.arrayBuffer());
 
       // Upload do arquivo
-      await client.uploadFrom(buffer, remotePath);
+      const stream = Readable.from(buffer);
+      await client.uploadFrom(stream, remotePath);
 
       // Gerar URL pública do arquivo
-      const publicUrl = `https://admtiago.com.br/${pessoaId}/${tipoDir}/${fileName}`;
+      const publicUrl = `https://www.admtiago.com.br/guarda-memoria/${pessoaId}/${tipoDir}/${fileName}`;
 
       // Salvar no banco de dados
-      const { PrismaClient } = require("@prisma/client");
       const prisma = new PrismaClient();
 
       const media = await prisma.media.create({
@@ -115,7 +153,6 @@ export async function POST(request) {
         },
       });
     } catch (ftpError) {
-      console.error("Erro no FTP:", ftpError);
       return NextResponse.json(
         { error: "Erro no upload para o servidor" },
         { status: 500 }
@@ -124,7 +161,6 @@ export async function POST(request) {
       client.close();
     }
   } catch (error) {
-    console.error("Erro no upload:", error);
     return NextResponse.json(
       { error: "Erro interno do servidor" },
       { status: 500 }
