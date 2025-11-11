@@ -5,21 +5,21 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/comentarios?pessoaId=...
+// GET /api/comentarios?entidadeId=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const pessoaId = searchParams.get("pessoaId");
+    const entidadeId = searchParams.get("entidadeId");
 
-    if (!pessoaId) {
+    if (!entidadeId) {
       return NextResponse.json(
-        { error: "pessoaId é obrigatório" },
+        { error: "entidadeId é obrigatório" },
         { status: 400 }
       );
     }
 
     const comentarios = await prisma.comentario.findMany({
-      where: { pessoaId },
+      where: { entidadeId },
       include: {
         usuario: { select: { fullName: true, fotoPerfilUrl: true } },
       },
@@ -42,20 +42,20 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { pessoaId, texto } = body;
+    const { entidadeId, texto } = body;
 
-    if (!pessoaId || !texto) {
+    if (!entidadeId || !texto) {
       return NextResponse.json(
-        { error: "pessoaId e texto são obrigatórios" },
+        { error: "entidadeId e texto são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se pessoa existe
-    const pessoa = await prisma.pessoa.findUnique({ where: { id: pessoaId } });
-    if (!pessoa) {
+    // Verificar se entidade existe
+    const entidade = await prisma.entidade.findUnique({ where: { id: entidadeId } });
+    if (!entidade) {
       return NextResponse.json(
-        { error: "Pessoa não encontrada" },
+        { error: "Entidade não encontrada" },
         { status: 404 }
       );
     }
@@ -73,7 +73,7 @@ export async function POST(request) {
 
     const comentario = await prisma.comentario.create({
       data: {
-        pessoaId,
+        entidadeId,
         usuarioId: usuario.id,
         texto,
       },
@@ -87,7 +87,7 @@ export async function POST(request) {
       data: {
         usuarioId: usuario.id,
         acao: "comentario",
-        detalhes: JSON.stringify({ comentarioId: comentario.id, pessoaId }),
+        detalhes: JSON.stringify({ comentarioId: comentario.id, entidadeId }),
       },
     });
 

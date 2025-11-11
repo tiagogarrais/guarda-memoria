@@ -18,7 +18,7 @@ export async function GET(request) {
 
     const denuncias = await prisma.denuncia.findMany({
       include: {
-        pessoa: { select: { id: true, nome: true } },
+        entidade: { select: { id: true, nome: true, tipo: true } },
         usuario: { select: { id: true, name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -42,20 +42,20 @@ export async function POST(request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { pessoaId, motivo, descricao } = await request.json();
+    const { entidadeId, motivo, descricao } = await request.json();
 
-    if (!pessoaId || !motivo) {
+    if (!entidadeId || !motivo) {
       return NextResponse.json(
-        { error: "pessoaId e motivo são obrigatórios" },
+        { error: "entidadeId e motivo são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se a pessoa existe
-    const pessoa = await prisma.pessoa.findUnique({ where: { id: pessoaId } });
-    if (!pessoa) {
+    // Verificar se a entidade existe
+    const entidade = await prisma.entidade.findUnique({ where: { id: entidadeId } });
+    if (!entidade) {
       return NextResponse.json(
-        { error: "Pessoa não encontrada" },
+        { error: "Entidade não encontrada" },
         { status: 404 }
       );
     }
@@ -63,7 +63,7 @@ export async function POST(request) {
     // Criar denúncia
     const denuncia = await prisma.denuncia.create({
       data: {
-        pessoaId,
+        entidadeId,
         usuarioId: session.user.id,
         motivo,
         descricao: descricao || "",

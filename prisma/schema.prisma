@@ -63,12 +63,13 @@ model Usuario {
   updatedAt         DateTime @updatedAt
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  pessoas      Pessoa[]
-  comentarios  Comentario[]
-  medias       Media[]
-  curtidas     Curtida[]
-  logs         Log[]
-  denuncias    Denuncia[]
+  entidades   Entidade[]  // Alterado de pessoas para entidades
+  pessoas     Pessoa[]    // Adicionado para compatibilidade
+  comentarios Comentario[]
+  medias      Media[]
+  curtidas    Curtida[]
+  logs        Log[]
+  denuncias   Denuncia[]
 }
 
 model VerificationToken {
@@ -79,6 +80,14 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// Enum para tipos de entidade
+enum TipoEntidade {
+  PESSOA
+  LUGAR
+  DATA
+  EVENTO
+}
+
 // Novas tabelas para Guarda Memória
 
 model Cidade {
@@ -87,11 +96,46 @@ model Cidade {
   nome       String // Ex.: "São Paulo"
   codigoIbge String? @unique // Opcional, para referência
 
-  pessoas Pessoa[]
+  entidades Entidade[]
+  pessoas   Pessoa[] // Adicionado para compatibilidade
 
   @@unique([estado, nome])
 }
 
+model Entidade {
+  id             String       @id @default(uuid())
+  tipo           TipoEntidade
+  nome           String
+  descricao      String?      @db.Text // História ou descrição
+  fotoUrl        String?      // URL da foto via FTP
+  cidadeId       String
+  usuarioId      String       // Quem indicou
+  // Campos específicos por tipo
+  dataNascimento DateTime?    // Para pessoas
+  profissao      String?      // Para pessoas
+  categoria      String?      // Para pessoas/lugares/eventos
+  tags           String?      @db.Text // JSON array de tags
+  // Para lugares
+  localizacao    String?      // Endereço ou coordenadas
+  // Para datas/eventos
+  dataRelacionada DateTime?   // Data específica
+  dataInicio     DateTime?    // Para eventos
+  dataFim        DateTime?    // Para eventos
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  cidade     Cidade       @relation(fields: [cidadeId], references: [id])
+  usuario    Usuario      @relation(fields: [usuarioId], references: [id])
+  comentarios Comentario[]
+  medias     Media[]
+  curtidas   Curtida[]
+  denuncias Denuncia[]   @relation("DenunciaEntidade")
+
+  @@index([cidadeId])
+  @@index([tipo])
+}
+
+// Tabela Pessoa mantida para compatibilidade durante migração
 model Pessoa {
   id             String   @id @default(uuid())
   nome           String
@@ -118,42 +162,52 @@ model Pessoa {
 
 model Comentario {
   id        String   @id @default(uuid())
-  pessoaId  String
+  pessoaId  String   // Manter temporariamente para migração
+  entidadeId String? // Novo campo opcional
   usuarioId String
   texto     String   @db.Text
   createdAt DateTime @default(now())
 
-  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  pessoa    Pessoa?    @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  entidade  Entidade?  @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
   denuncias Denuncia[] @relation("DenunciaComentario") // Denúncias sobre o comentário
 
   @@index([pessoaId])
+  @@index([entidadeId])
 }
 
 model Media {
   id        String   @id @default(uuid())
-  pessoaId  String
+  pessoaId  String   // Manter temporariamente para migração
+  entidadeId String? // Novo campo opcional
   usuarioId String
   tipo      String   // "foto", "video", "audio"
   url       String   // URL via FTP
   createdAt DateTime @default(now())
 
-  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  pessoa   Pessoa?   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  entidade Entidade? @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  usuario  Usuario   @relation(fields: [usuarioId], references: [id])
 
   @@index([pessoaId])
+  @@index([entidadeId])
 }
 
 model Curtida {
-  pessoaId  String
-  usuarioId String
-  createdAt DateTime @default(now())
+  pessoaId   String   // Manter temporariamente para migração
+  entidadeId String?  // Novo campo opcional
+  usuarioId  String
+  createdAt  DateTime @default(now())
 
-  pessoa  Pessoa  @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  pessoa   Pessoa?   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  entidade Entidade? @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  usuario  Usuario   @relation(fields: [usuarioId], references: [id])
 
   @@unique([pessoaId, usuarioId]) // Uma curtida por usuário/pessoa
+  @@unique([entidadeId, usuarioId]) // Uma curtida por usuário/entidade
   @@index([pessoaId])
+  @@index([entidadeId])
 }
 
 model Log {
@@ -171,7 +225,8 @@ model Log {
 
 model Denuncia {
   id           String   @id @default(uuid())
-  pessoaId     String?
+  pessoaId     String?  // Manter temporariamente para migração
+  entidadeId   String?  // Novo campo opcional
   comentarioId String?
   usuarioId    String   // Quem denunciou
   motivo       String   @db.Text
@@ -180,9 +235,11 @@ model Denuncia {
   updatedAt    DateTime @updatedAt
 
   pessoa     Pessoa?     @relation("DenunciaPessoa", fields: [pessoaId], references: [id], map: "DenunciaPessoa_fkey")
+  entidade   Entidade?   @relation("DenunciaEntidade", fields: [entidadeId], references: [id], map: "DenunciaEntidade_fkey")
   comentario Comentario? @relation("DenunciaComentario", fields: [comentarioId], references: [id], map: "DenunciaComentario_fkey")
   usuario    Usuario     @relation(fields: [usuarioId], references: [id])
 
   @@index([pessoaId])
+  @@index([entidadeId])
   @@index([comentarioId])
 }

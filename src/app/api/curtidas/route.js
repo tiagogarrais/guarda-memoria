@@ -5,16 +5,16 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/curtidas?usuarioId=...&pessoaId=...
+// GET /api/curtidas?usuarioId=...&entidadeId=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const usuarioId = searchParams.get("usuarioId");
-    const pessoaId = searchParams.get("pessoaId");
+    const entidadeId = searchParams.get("entidadeId");
 
-    if (!usuarioId || !pessoaId) {
+    if (!usuarioId || !entidadeId) {
       return NextResponse.json(
-        { error: "usuarioId e pessoaId são obrigatórios" },
+        { error: "usuarioId e entidadeId são obrigatórios" },
         { status: 400 }
       );
     }
@@ -22,7 +22,7 @@ export async function GET(request) {
     const curtidas = await prisma.curtida.findMany({
       where: {
         usuarioId,
-        pessoaId,
+        entidadeId,
       },
     });
 
@@ -42,20 +42,20 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { pessoaId } = body;
+    const { entidadeId } = body;
 
-    if (!pessoaId) {
+    if (!entidadeId) {
       return NextResponse.json(
-        { error: "pessoaId é obrigatório" },
+        { error: "entidadeId é obrigatório" },
         { status: 400 }
       );
     }
 
-    // Verificar se pessoa existe
-    const pessoa = await prisma.pessoa.findUnique({ where: { id: pessoaId } });
-    if (!pessoa) {
+    // Verificar se entidade existe
+    const entidade = await prisma.entidade.findUnique({ where: { id: entidadeId } });
+    if (!entidade) {
       return NextResponse.json(
-        { error: "Pessoa não encontrada" },
+        { error: "Entidade não encontrada" },
         { status: 404 }
       );
     }
@@ -74,8 +74,8 @@ export async function POST(request) {
     // Verificar se já curtiu
     const existingCurtida = await prisma.curtida.findUnique({
       where: {
-        pessoaId_usuarioId: {
-          pessoaId,
+        entidadeId_usuarioId: {
+          entidadeId,
           usuarioId: usuario.id,
         },
       },
@@ -83,14 +83,14 @@ export async function POST(request) {
 
     if (existingCurtida) {
       return NextResponse.json(
-        { error: "Você já curtiu esta pessoa" },
+        { error: "Você já curtiu esta entidade" },
         { status: 409 }
       );
     }
 
     const curtida = await prisma.curtida.create({
       data: {
-        pessoaId,
+        entidadeId,
         usuarioId: usuario.id,
       },
     });
@@ -100,7 +100,7 @@ export async function POST(request) {
       data: {
         usuarioId: usuario.id,
         acao: "curtida",
-        detalhes: JSON.stringify({ curtidaId: curtida.id, pessoaId }),
+        detalhes: JSON.stringify({ curtidaId: curtida.id, entidadeId }),
       },
     });
 
@@ -123,11 +123,11 @@ export async function DELETE(request) {
     }
 
     const body = await request.json();
-    const { pessoaId } = body;
+    const { entidadeId } = body;
 
-    if (!pessoaId) {
+    if (!entidadeId) {
       return NextResponse.json(
-        { error: "pessoaId é obrigatório" },
+        { error: "entidadeId é obrigatório" },
         { status: 400 }
       );
     }
@@ -146,8 +146,8 @@ export async function DELETE(request) {
     // Verificar se a curtida existe
     const existingCurtida = await prisma.curtida.findUnique({
       where: {
-        pessoaId_usuarioId: {
-          pessoaId,
+        entidadeId_usuarioId: {
+          entidadeId,
           usuarioId: usuario.id,
         },
       },
@@ -163,8 +163,8 @@ export async function DELETE(request) {
     // Remover a curtida
     await prisma.curtida.delete({
       where: {
-        pessoaId_usuarioId: {
-          pessoaId,
+        entidadeId_usuarioId: {
+          entidadeId,
           usuarioId: usuario.id,
         },
       },
@@ -175,7 +175,7 @@ export async function DELETE(request) {
       data: {
         usuarioId: usuario.id,
         acao: "descurtida",
-        detalhes: JSON.stringify({ pessoaId }),
+        detalhes: JSON.stringify({ entidadeId }),
       },
     });
 

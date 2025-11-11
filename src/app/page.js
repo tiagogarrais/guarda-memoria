@@ -28,9 +28,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // Se usuário está logado e tem cidade selecionada, redirecionar para pessoas
+    // Se usuário está logado e tem cidade selecionada, redirecionar para entidades
     if (session && cidadeSelecionada && !loading) {
-      router.push(`/pessoas?cidadeId=${cidadeSelecionada.id}`);
+      router.push(`/entidades?cidadeId=${cidadeSelecionada.id}`);
     }
   }, [session, cidadeSelecionada, loading, router]);
 
@@ -86,7 +86,7 @@ export default function Home() {
       <header style={{ textAlign: "center", marginBottom: "40px" }}>
         <h1 style={{ fontSize: "48px", color: "#333" }}>Guarda Memória</h1>
         <p style={{ fontSize: "20px", color: "#666" }}>
-          Preservando histórias de pessoas que marcaram nossas cidades
+          Preservando histórias de pessoas, lugares, datas e eventos que marcaram nossas cidades
         </p>
       </header>
 
@@ -94,14 +94,14 @@ export default function Home() {
       <section style={{ marginBottom: "40px" }}>
         <h2>O que é o Guarda Memória?</h2>
         <p>
-          Em todas as cidades existem pessoas que estão na memória dos
-          residentes. São pessoas comuns que se tornam ícones locais, mas que a
-          nova geração pode não conhecer ou dar valor se não souber da história.
+          Em todas as cidades existem pessoas, lugares, datas e eventos que estão na memória dos
+          residentes. São pessoas comuns que se tornam ícones locais, lugares históricos,
+          datas importantes ou eventos marcantes, mas que a nova geração pode não conhecer ou dar valor se não souber da história.
         </p>
         <p>
           O Guarda Memória é um site estilo rede social dedicado a preservar e
-          compartilhar essas histórias. Aqui, você pode indicar pessoas
-          conhecidas, curtir as mais lembradas e contribuir com comentários e
+          compartilhar essas histórias. Aqui, você pode registrar pessoas,
+          lugares, datas e eventos conhecidos, curtir os mais lembrados e contribuir com comentários e
           materiais.
         </p>
         <p>
