@@ -76,8 +76,8 @@ export default function SelecionarLocalizacao() {
         })
       );
 
-      // Redirecionar para /pessoas?cidadeId=...
-      router.push(`/pessoas?cidadeId=${cidadeData.id}`);
+      // Redirecionar para /entidades?cidadeId=...
+      router.push(`/entidades?cidadeId=${cidadeData.id}`);
     } catch (error) {
       console.error("Erro:", error);
       alert("Erro ao selecionar localização. Tente novamente.");

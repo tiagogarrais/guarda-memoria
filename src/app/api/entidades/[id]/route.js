@@ -19,13 +19,13 @@ export async function GET(request, { params }) {
           include: {
             usuario: { select: { fullName: true } },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
         medias: {
           include: {
             usuario: { select: { fullName: true } },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
         },
         curtidas: {
           include: {
@@ -101,6 +101,16 @@ export async function PUT(request, { params }) {
       dataRelacionada,
       dataInicio,
       dataFim,
+      artista,
+      anoCriacao,
+      tecnica,
+      arquivoUrl,
+      tipoArquivo,
+      tamanhoArquivo,
+      nomeArquivo,
+      membrosPrincipais,
+      dataFormacao,
+      tipoColetivo,
     } = body;
 
     const entidadeAtualizada = await prisma.entidade.update({
@@ -117,6 +127,16 @@ export async function PUT(request, { params }) {
         dataRelacionada: dataRelacionada ? new Date(dataRelacionada) : null,
         dataInicio: dataInicio ? new Date(dataInicio) : null,
         dataFim: dataFim ? new Date(dataFim) : null,
+        artista,
+        anoCriacao: anoCriacao ? parseInt(anoCriacao) : null,
+        tecnica,
+        arquivoUrl,
+        tipoArquivo,
+        tamanhoArquivo: tamanhoArquivo ? parseInt(tamanhoArquivo) : null,
+        nomeArquivo,
+        membrosPrincipais,
+        dataFormacao: dataFormacao ? new Date(dataFormacao) : null,
+        tipoColetivo,
       },
     });
 

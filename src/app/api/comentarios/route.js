@@ -52,7 +52,9 @@ export async function POST(request) {
     }
 
     // Verificar se entidade existe
-    const entidade = await prisma.entidade.findUnique({ where: { id: entidadeId } });
+    const entidade = await prisma.entidade.findUnique({
+      where: { id: entidadeId },
+    });
     if (!entidade) {
       return NextResponse.json(
         { error: "Entidade não encontrada" },

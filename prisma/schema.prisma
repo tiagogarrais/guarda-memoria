@@ -86,6 +86,8 @@ enum TipoEntidade {
   LUGAR
   DATA
   EVENTO
+  OBRA_ARTE
+  COLETIVO_ORGANIZADO
 }
 
 // Novas tabelas para Guarda Memória
@@ -121,6 +123,18 @@ model Entidade {
   dataRelacionada DateTime?   // Data específica
   dataInicio     DateTime?    // Para eventos
   dataFim        DateTime?    // Para eventos
+  // Para obras de arte
+  artista        String?      // Nome do artista
+  anoCriacao     Int?         // Ano de criação
+  tecnica        String?      // Técnica utilizada
+  arquivoUrl     String?      // URL do arquivo da obra via FTP
+  tipoArquivo    String?      // Tipo do arquivo (imagem, audio, video, documento, etc.)
+  tamanhoArquivo Int?         // Tamanho do arquivo em bytes
+  nomeArquivo    String?      // Nome original do arquivo
+  // Para coletivos organizados
+  membrosPrincipais String?   @db.Text // JSON array com nomes dos membros principais
+  dataFormacao   DateTime?    // Data de formação do coletivo
+  tipoColetivo   String?      // Tipo do coletivo (musical, esportivo, cultural, etc.)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -154,7 +168,6 @@ model Pessoa {
   usuario    Usuario     @relation(fields: [usuarioId], references: [id])
   comentarios Comentario[]
   medias     Media[]
-  curtidas   Curtida[]
   denuncias Denuncia[] @relation("DenunciaPessoa") // Denúncias sobre a pessoa
 
   @@index([cidadeId])
@@ -195,18 +208,14 @@ model Media {
 }
 
 model Curtida {
-  pessoaId   String   // Manter temporariamente para migração
-  entidadeId String?  // Novo campo opcional
+  entidadeId String
   usuarioId  String
   createdAt  DateTime @default(now())
 
-  pessoa   Pessoa?   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  entidade Entidade? @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
-  usuario  Usuario   @relation(fields: [usuarioId], references: [id])
+  entidade Entidade @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id])
 
-  @@unique([pessoaId, usuarioId]) // Uma curtida por usuário/pessoa
   @@unique([entidadeId, usuarioId]) // Uma curtida por usuário/entidade
-  @@index([pessoaId])
   @@index([entidadeId])
 }
 

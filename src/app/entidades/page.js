@@ -20,7 +20,7 @@ function EntidadesContent() {
 
   const [filtros, setFiltros] = useState({
     search: "",
-    tipo: "", // PESSOA, LUGAR, DATA, EVENTO
+    tipo: "", // PESSOA, LUGAR, DATA, EVENTO, OBRA_ARTE, COLETIVO_ORGANIZADO
     categoria: "",
     profissao: "",
     dataInicio: "",
@@ -85,7 +85,7 @@ function EntidadesContent() {
   };
 
   const handleFiltroChange = (campo, valor) => {
-    setFiltros(prev => ({ ...prev, [campo]: valor }));
+    setFiltros((prev) => ({ ...prev, [campo]: valor }));
   };
 
   const limparFiltros = () => {
@@ -101,21 +101,39 @@ function EntidadesContent() {
 
   const getTipoIcon = (tipo) => {
     switch (tipo) {
-      case 'PESSOA': return '👤';
-      case 'LUGAR': return '📍';
-      case 'DATA': return '📅';
-      case 'EVENTO': return '🎉';
-      default: return '📄';
+      case "PESSOA":
+        return "👤";
+      case "LUGAR":
+        return "📍";
+      case "DATA":
+        return "📅";
+      case "EVENTO":
+        return "🎉";
+      case "OBRA_ARTE":
+        return "🎨";
+      case "COLETIVO_ORGANIZADO":
+        return "👥";
+      default:
+        return "📄";
     }
   };
 
   const getTipoLabel = (tipo) => {
     switch (tipo) {
-      case 'PESSOA': return 'Pessoa';
-      case 'LUGAR': return 'Lugar';
-      case 'DATA': return 'Data';
-      case 'EVENTO': return 'Evento';
-      default: return tipo;
+      case "PESSOA":
+        return "Pessoa";
+      case "LUGAR":
+        return "Lugar";
+      case "DATA":
+        return "Data";
+      case "EVENTO":
+        return "Evento";
+      case "OBRA_ARTE":
+        return "Obra de Arte";
+      case "COLETIVO_ORGANIZADO":
+        return "Coletivo Organizado";
+      default:
+        return tipo;
     }
   };
 
@@ -148,14 +166,13 @@ function EntidadesContent() {
         }}
       >
         <div>
-          <h1 style={{ margin: 0, color: "#333" }}>
-            Memórias de {cidadeNome}
-          </h1>
+          <h1 style={{ margin: 0, color: "#333" }}>Memórias de {cidadeNome}</h1>
           <p style={{ margin: "4px 0 0 0", color: "#666" }}>
-            {entidades.length} entidade{entidades.length !== 1 ? "s" : ""} registrada{entidades.length !== 1 ? "s" : ""}
+            {entidades.length} entidade{entidades.length !== 1 ? "s" : ""}{" "}
+            registrada{entidades.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Link href="/indicar-entidade">
+        <Link href={`/indicar-entidade?cidadeId=${cidadeId}`}>
           <button
             style={{
               padding: "12px 24px",
@@ -242,6 +259,10 @@ function EntidadesContent() {
                   <option value="LUGAR">Lugar</option>
                   <option value="DATA">Data</option>
                   <option value="EVENTO">Evento</option>
+                  <option value="OBRA_ARTE">Obra de Arte</option>
+                  <option value="COLETIVO_ORGANIZADO">
+                    Coletivo Organizado
+                  </option>
                 </select>
               </div>
 
@@ -252,7 +273,9 @@ function EntidadesContent() {
                 <input
                   type="text"
                   value={filtros.categoria}
-                  onChange={(e) => handleFiltroChange("categoria", e.target.value)}
+                  onChange={(e) =>
+                    handleFiltroChange("categoria", e.target.value)
+                  }
                   placeholder="Ex: artista, político..."
                   style={{
                     width: "100%",
@@ -270,7 +293,9 @@ function EntidadesContent() {
                 <input
                   type="text"
                   value={filtros.profissao}
-                  onChange={(e) => handleFiltroChange("profissao", e.target.value)}
+                  onChange={(e) =>
+                    handleFiltroChange("profissao", e.target.value)
+                  }
                   placeholder="Ex: professor, médico..."
                   style={{
                     width: "100%",
@@ -288,7 +313,9 @@ function EntidadesContent() {
                 <input
                   type="date"
                   value={filtros.dataInicio}
-                  onChange={(e) => handleFiltroChange("dataInicio", e.target.value)}
+                  onChange={(e) =>
+                    handleFiltroChange("dataInicio", e.target.value)
+                  }
                   style={{
                     width: "100%",
                     padding: "8px",
@@ -305,7 +332,9 @@ function EntidadesContent() {
                 <input
                   type="date"
                   value={filtros.dataFim}
-                  onChange={(e) => handleFiltroChange("dataFim", e.target.value)}
+                  onChange={(e) =>
+                    handleFiltroChange("dataFim", e.target.value)
+                  }
                   style={{
                     width: "100%",
                     padding: "8px",
@@ -367,7 +396,12 @@ function EntidadesContent() {
                     top: "-10px",
                     left: "50%",
                     transform: "translateX(-50%)",
-                    backgroundColor: index === 0 ? "#ffd700" : index === 1 ? "#c0c0c0" : "#cd7f32",
+                    backgroundColor:
+                      index === 0
+                        ? "#ffd700"
+                        : index === 1
+                        ? "#c0c0c0"
+                        : "#cd7f32",
                     color: "white",
                     borderRadius: "50%",
                     width: "30px",
@@ -408,29 +442,31 @@ function EntidadesContent() {
                 </p>
 
                 {entidade.descricao && (
-                  <p style={{
-                    color: "#666",
-                    fontSize: "14px",
-                    margin: "8px 0",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}>
+                  <p
+                    style={{
+                      color: "#666",
+                      fontSize: "14px",
+                      margin: "8px 0",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
                     {entidade.descricao}
                   </p>
                 )}
 
-                <div style={{ marginTop: "12px", fontSize: "14px", color: "#666" }}>
+                <div
+                  style={{ marginTop: "12px", fontSize: "14px", color: "#666" }}
+                >
                   <span style={{ marginRight: "16px" }}>
                     ❤️ {entidade._count.curtidas}
                   </span>
                   <span style={{ marginRight: "16px" }}>
                     💬 {entidade._count.comentarios}
                   </span>
-                  <span>
-                    📎 {entidade._count.medias}
-                  </span>
+                  <span>📎 {entidade._count.medias}</span>
                 </div>
 
                 <Link href={`/entidade/${entidade.id}`}>
@@ -477,7 +513,13 @@ function EntidadesContent() {
                   boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", marginBottom: "8px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    marginBottom: "8px",
+                  }}
+                >
                   {entidade.fotoUrl && (
                     <img
                       src={entidade.fotoUrl}
@@ -498,36 +540,44 @@ function EntidadesContent() {
                       </span>
                       {entidade.nome}
                     </h3>
-                    <p style={{ margin: "2px 0", color: "#666", fontSize: "14px" }}>
+                    <p
+                      style={{
+                        margin: "2px 0",
+                        color: "#666",
+                        fontSize: "14px",
+                      }}
+                    >
                       {getTipoLabel(entidade.tipo)}
                     </p>
                   </div>
                 </div>
 
                 {entidade.descricao && (
-                  <p style={{
-                    color: "#666",
-                    fontSize: "14px",
-                    margin: "8px 0",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }}>
+                  <p
+                    style={{
+                      color: "#666",
+                      fontSize: "14px",
+                      margin: "8px 0",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
                     {entidade.descricao}
                   </p>
                 )}
 
-                <div style={{ marginTop: "12px", fontSize: "14px", color: "#666" }}>
+                <div
+                  style={{ marginTop: "12px", fontSize: "14px", color: "#666" }}
+                >
                   <span style={{ marginRight: "16px" }}>
                     ❤️ {entidade._count.curtidas}
                   </span>
                   <span style={{ marginRight: "16px" }}>
                     💬 {entidade._count.comentarios}
                   </span>
-                  <span>
-                    📎 {entidade._count.medias}
-                  </span>
+                  <span>📎 {entidade._count.medias}</span>
                 </div>
 
                 <Link href={`/entidade/${entidade.id}`}>
@@ -561,7 +611,7 @@ function EntidadesContent() {
           <p style={{ color: "#999" }}>
             Seja o primeiro a registrar uma memória desta cidade!
           </p>
-          <Link href="/indicar-entidade">
+          <Link href={`/indicar-entidade?cidadeId=${cidadeId}`}>
             <button
               style={{
                 marginTop: "16px",

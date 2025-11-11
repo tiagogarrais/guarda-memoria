@@ -36,9 +36,9 @@ function PessoasContent() {
       router.push("/selecionar-localizacao");
       return;
     }
-    fetchCidade();
-    fetchPessoas();
-  }, [session, cidadeId, router, filtros]);
+    // Redirecionar para a nova página de entidades
+    router.replace(`/entidades?cidadeId=${cidadeId}`);
+  }, [session, cidadeId, router]);
 
   const fetchCidade = async () => {
     try {

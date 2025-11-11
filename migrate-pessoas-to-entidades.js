@@ -1,9 +1,9 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
 async function migratePessoasToEntidades() {
-  console.log('Iniciando migração de Pessoas para Entidades...');
+  console.log("Iniciando migração de Pessoas para Entidades...");
 
   try {
     // Buscar todas as pessoas existentes
@@ -24,7 +24,7 @@ async function migratePessoasToEntidades() {
       // Criar entidade correspondente
       const entidade = await prisma.entidade.create({
         data: {
-          tipo: 'PESSOA',
+          tipo: "PESSOA",
           nome: pessoa.nome,
           descricao: pessoa.historia,
           fotoUrl: pessoa.fotoUrl,
@@ -76,23 +76,24 @@ async function migratePessoasToEntidades() {
       }
     }
 
-    console.log('Migração concluída com sucesso!');
+    console.log("Migração concluída com sucesso!");
 
     // Verificar se a migração foi bem-sucedida
-    const entidadesCount = await prisma.entidade.count({ where: { tipo: 'PESSOA' } });
+    const entidadesCount = await prisma.entidade.count({
+      where: { tipo: "PESSOA" },
+    });
     const pessoasCount = await prisma.pessoa.count();
 
     console.log(`Entidades PESSOA criadas: ${entidadesCount}`);
     console.log(`Pessoas originais: ${pessoasCount}`);
 
     if (entidadesCount === pessoasCount) {
-      console.log('✅ Migração verificada com sucesso!');
+      console.log("✅ Migração verificada com sucesso!");
     } else {
-      console.log('⚠️  Discrepância na contagem - verificar migração');
+      console.log("⚠️  Discrepância na contagem - verificar migração");
     }
-
   } catch (error) {
-    console.error('Erro durante migração:', error);
+    console.error("Erro durante migração:", error);
     throw error;
   } finally {
     await prisma.$disconnect();
@@ -100,8 +101,7 @@ async function migratePessoasToEntidades() {
 }
 
 // Executar migração
-migratePessoasToEntidades()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+migratePessoasToEntidades().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

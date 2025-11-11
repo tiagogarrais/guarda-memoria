@@ -86,7 +86,8 @@ export default function Home() {
       <header style={{ textAlign: "center", marginBottom: "40px" }}>
         <h1 style={{ fontSize: "48px", color: "#333" }}>Guarda Memória</h1>
         <p style={{ fontSize: "20px", color: "#666" }}>
-          Preservando histórias de pessoas, lugares, datas e eventos que marcaram nossas cidades
+          Preservando histórias de pessoas, lugares, datas, eventos e obras de
+          arte que marcaram nossas cidades
         </p>
       </header>
 
@@ -94,15 +95,18 @@ export default function Home() {
       <section style={{ marginBottom: "40px" }}>
         <h2>O que é o Guarda Memória?</h2>
         <p>
-          Em todas as cidades existem pessoas, lugares, datas e eventos que estão na memória dos
-          residentes. São pessoas comuns que se tornam ícones locais, lugares históricos,
-          datas importantes ou eventos marcantes, mas que a nova geração pode não conhecer ou dar valor se não souber da história.
+          Em todas as cidades existem pessoas, lugares, datas, eventos e obras
+          de arte que estão na memória dos residentes. São pessoas comuns que se
+          tornam ícones locais, lugares históricos, datas importantes, eventos
+          marcantes ou obras artísticas que representam a cultura local, mas que
+          a nova geração pode não conhecer ou dar valor se não souber da
+          história.
         </p>
         <p>
           O Guarda Memória é um site estilo rede social dedicado a preservar e
           compartilhar essas histórias. Aqui, você pode registrar pessoas,
-          lugares, datas e eventos conhecidos, curtir os mais lembrados e contribuir com comentários e
-          materiais.
+          lugares, datas, eventos e obras de arte conhecidos, curtir os mais
+          lembrados e contribuir com comentários e materiais.
         </p>
         <p>
           Cada cidade tem seu próprio ranking e pódio, promovendo a conexão

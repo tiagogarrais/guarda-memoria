@@ -5,17 +5,21 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/entidades?cidadeId=...&tipo=...&search=...&categoria=...&profissao=...&dataInicio=...&dataFim=...
+// GET /api/entidades?cidadeId=...&tipo=...&search=...&categoria=...&profissao=...&dataInicio=...&dataFim=...&artista=...&anoCriacao=...&tipoArquivo=...&tipoColetivo=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const cidadeId = searchParams.get("cidadeId");
-    const tipo = searchParams.get("tipo"); // PESSOA, LUGAR, DATA, EVENTO
+    const tipo = searchParams.get("tipo"); // PESSOA, LUGAR, DATA, EVENTO, OBRA_ARTE, COLETIVO_ORGANIZADO
     const search = searchParams.get("search");
     const categoria = searchParams.get("categoria");
     const profissao = searchParams.get("profissao");
     const dataInicio = searchParams.get("dataInicio");
     const dataFim = searchParams.get("dataFim");
+    const artista = searchParams.get("artista");
+    const anoCriacao = searchParams.get("anoCriacao");
+    const tipoArquivo = searchParams.get("tipoArquivo");
+    const tipoColetivo = searchParams.get("tipoColetivo");
 
     if (!cidadeId) {
       return NextResponse.json(
@@ -47,13 +51,29 @@ export async function GET(request) {
       where.profissao = { contains: profissao, mode: "insensitive" };
     }
 
+    if (artista) {
+      where.artista = { contains: artista, mode: "insensitive" };
+    }
+
+    if (anoCriacao) {
+      where.anoCriacao = parseInt(anoCriacao);
+    }
+
+    if (tipoArquivo) {
+      where.tipoArquivo = tipoArquivo;
+    }
+
+    if (tipoColetivo) {
+      where.tipoColetivo = tipoColetivo;
+    }
+
     // Filtros de data (para nascimento, data relacionada, ou eventos)
     if (dataInicio || dataFim) {
       where.OR = where.OR || [];
       const dataFilters = [];
 
       // Para pessoas (data de nascimento)
-      if (!tipo || tipo === 'PESSOA') {
+      if (!tipo || tipo === "PESSOA") {
         const pessoaFilter = { dataNascimento: {} };
         if (dataInicio) pessoaFilter.dataNascimento.gte = new Date(dataInicio);
         if (dataFim) pessoaFilter.dataNascimento.lte = new Date(dataFim);
@@ -61,7 +81,7 @@ export async function GET(request) {
       }
 
       // Para datas específicas
-      if (!tipo || tipo === 'DATA') {
+      if (!tipo || tipo === "DATA") {
         const dataFilter = { dataRelacionada: {} };
         if (dataInicio) dataFilter.dataRelacionada.gte = new Date(dataInicio);
         if (dataFim) dataFilter.dataRelacionada.lte = new Date(dataFim);
@@ -69,11 +89,19 @@ export async function GET(request) {
       }
 
       // Para eventos (data de início)
-      if (!tipo || tipo === 'EVENTO') {
+      if (!tipo || tipo === "EVENTO") {
         const eventoFilter = { dataInicio: {} };
         if (dataInicio) eventoFilter.dataInicio.gte = new Date(dataInicio);
         if (dataFim) eventoFilter.dataInicio.lte = new Date(dataFim);
         dataFilters.push(eventoFilter);
+      }
+
+      // Para coletivos organizados (data de formação)
+      if (!tipo || tipo === "COLETIVO_ORGANIZADO") {
+        const coletivoFilter = { dataFormacao: {} };
+        if (dataInicio) coletivoFilter.dataFormacao.gte = new Date(dataInicio);
+        if (dataFim) coletivoFilter.dataFormacao.lte = new Date(dataFim);
+        dataFilters.push(coletivoFilter);
       }
 
       where.OR.push(...dataFilters);
@@ -139,6 +167,13 @@ export async function POST(request) {
       dataRelacionada, // Para datas
       dataInicio, // Para eventos
       dataFim, // Para eventos
+      artista, // Para obras de arte
+      anoCriacao, // Para obras de arte
+      tecnica, // Para obras de arte
+      arquivoUrl, // Para obras de arte
+      tipoArquivo, // Para obras de arte
+      tamanhoArquivo, // Para obras de arte
+      nomeArquivo, // Para obras de arte
     } = body;
 
     if (!tipo || !nome || !cidadeId) {
@@ -149,10 +184,20 @@ export async function POST(request) {
     }
 
     // Validar tipo
-    const tiposValidos = ['PESSOA', 'LUGAR', 'DATA', 'EVENTO'];
+    const tiposValidos = [
+      "PESSOA",
+      "LUGAR",
+      "DATA",
+      "EVENTO",
+      "OBRA_ARTE",
+      "COLETIVO_ORGANIZADO",
+    ];
     if (!tiposValidos.includes(tipo)) {
       return NextResponse.json(
-        { error: "Tipo inválido. Deve ser PESSOA, LUGAR, DATA ou EVENTO" },
+        {
+          error:
+            "Tipo inválido. Deve ser PESSOA, LUGAR, DATA, EVENTO, OBRA_ARTE ou COLETIVO_ORGANIZADO",
+        },
         { status: 400 }
       );
     }
@@ -205,6 +250,13 @@ export async function POST(request) {
         dataRelacionada: dataRelacionada ? new Date(dataRelacionada) : null,
         dataInicio: dataInicio ? new Date(dataInicio) : null,
         dataFim: dataFim ? new Date(dataFim) : null,
+        artista,
+        anoCriacao: anoCriacao ? parseInt(anoCriacao) : null,
+        tecnica,
+        arquivoUrl,
+        tipoArquivo,
+        tamanhoArquivo: tamanhoArquivo ? parseInt(tamanhoArquivo) : null,
+        nomeArquivo,
       },
     });
 

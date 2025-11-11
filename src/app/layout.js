@@ -4,10 +4,19 @@ import { SessionProvider } from "next-auth/react";
 import Link from "next/link";
 import { useSession, signOut, signIn } from "next-auth/react";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import "./globals.css";
 
 function Header() {
   const { data: session } = useSession();
+  const router = useRouter();
+
+  const handleTrocarCidade = () => {
+    // Limpar cidade selecionada do localStorage
+    localStorage.removeItem("cidadeSelecionada");
+    // Redirecionar para seleção de localização
+    router.push("/selecionar-localizacao");
+  };
 
   return (
     <header
@@ -47,6 +56,24 @@ function Header() {
         <nav>
           {session ? (
             <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+              <button
+                onClick={handleTrocarCidade}
+                style={{
+                  backgroundColor: "#6c757d",
+                  color: "white",
+                  border: "none",
+                  padding: "8px 12px",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+                title="Trocar de cidade"
+              >
+                🏙️ Trocar Cidade
+              </button>
               <Link
                 href="/profile"
                 style={{
@@ -157,6 +184,7 @@ export default function RootLayout({ children }) {
               marginTop: "80px", // Altura do header
               marginBottom: "60px", // Altura do footer
               minHeight: "calc(100vh - 140px)", // Altura total menos header e footer
+              paddingBottom: "4rem", // Espaço adicional no final das páginas
             }}
           >
             {children}
