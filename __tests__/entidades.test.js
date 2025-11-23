@@ -169,7 +169,7 @@ describe("Testes de Entidades - Validações Básicas", () => {
       ).rejects.toThrow();
 
       // descricao é opcional, então não deve falhar
-      await expect(
+      await expect(async () =>
         prisma.entidade.create({
           data: {
             tipo: "PESSOA",

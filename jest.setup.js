@@ -54,14 +54,24 @@ global.createTestData = async () => {
       },
     });
 
-    // Criar User (NextAuth) primeiro
+    // Criar User (NextAuth)
     const user = await prisma.user.create({
       data: {
-        id: `test-user-id-${uniqueId}`,
         name: "Test User",
         email: `test${uniqueId}@example.com`,
       },
     });
+
+    console.log("User criado:", user.id, user.email);
+
+    // Verificar se o User foi criado corretamente
+    const userExists = await prisma.user.findUnique({
+      where: { id: user.id },
+    });
+
+    if (!userExists) {
+      throw new Error(`User não foi criado corretamente: ${user.id}`);
+    }
 
     // Criar Usuario (perfil) referenciando o User
     const usuario = await prisma.usuario.create({
@@ -71,6 +81,8 @@ global.createTestData = async () => {
         fotoPerfilUrl: "https://example.com/photo.jpg",
       },
     });
+
+    console.log("Usuario criado:", usuario.id, usuario.userId);
 
     return { cidade, usuario, uniqueId };
   } catch (error) {

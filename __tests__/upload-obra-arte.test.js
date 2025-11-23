@@ -114,7 +114,7 @@ describe("Testes de Upload Obra de Arte - Validações Básicas", () => {
       // Criar dados base para o teste
       const { cidade, usuario } = await global.createTestData();
 
-      await expect(
+      await expect(async () =>
         prisma.entidade.create({
           data: {
             tipo: "OBRA_ARTE",

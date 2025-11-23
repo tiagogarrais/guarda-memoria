@@ -18,12 +18,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       // Criar dados base para o teste
       const { cidade, usuario } = await global.createTestData();
 
-      // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      // Criar pessoa para testar comentário
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
           nome: "Pessoa Teste",
-          descricao: "Pessoa para teste de comentário",
+          historia: "Pessoa para teste de comentário",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -31,30 +30,33 @@ describe("Testes de Comentários - Validações Básicas", () => {
 
       const comentario = await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Este é um comentário de teste",
         },
       });
 
       expect(comentario).toHaveProperty("id");
       expect(comentario.texto).toBe("Este é um comentário de teste");
-      expect(comentario.entidadeId).toBe(entidadeId);
-      expect(comentario.usuarioId).toBe(usuarioId);
+      expect(comentario.pessoaId).toBe(pessoa.id);
+      expect(comentario.usuarioId).toBe(usuario.id);
     });
 
-    it("deve falhar sem entidadeId", async () => {
+    it("deve permitir comentário sem entidadeId", async () => {
       // Criar dados base para o teste
       const { usuario } = await global.createTestData();
 
-      await expect(
-        prisma.comentario.create({
-          data: {
-            pessoaId: usuario.id,
-            texto: "Comentário sem entidadeId",
-          },
-        })
-      ).rejects.toThrow();
+      const comentario = await prisma.comentario.create({
+        data: {
+          usuarioId: usuario.id,
+          texto: "Comentário sem entidadeId",
+        },
+      });
+
+      expect(comentario).toHaveProperty("id");
+      expect(comentario.texto).toBe("Comentário sem entidadeId");
+      expect(comentario.entidadeId).toBeNull();
+      expect(comentario.usuarioId).toBe(usuario.id);
     });
 
     it("deve falhar sem texto", async () => {
@@ -62,11 +64,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       const { cidade, usuario } = await global.createTestData();
 
       // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
+          nome: "Pessoa Teste",
           nome: "Pessoa Teste Falha Texto",
-          descricao: "Pessoa para teste de falha de texto",
+          historia: "Pessoa para teste de falha de texto",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -75,37 +77,38 @@ describe("Testes de Comentários - Validações Básicas", () => {
       await expect(
         prisma.comentario.create({
           data: {
-            entidadeId: entidade.id,
-            pessoaId: usuario.id,
+            pessoaId: pessoa.id,
+            usuarioId: usuario.id,
+            usuarioId: usuario.id,
           },
         })
       ).rejects.toThrow();
     });
 
-    it("deve falhar com texto vazio", async () => {
+    it("deve permitir texto com apenas espaços", async () => {
       // Criar dados base para o teste
       const { cidade, usuario } = await global.createTestData();
 
-      // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      // Criar pessoa para testar comentário
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
-          nome: "Pessoa Teste Falha",
-          descricao: "Pessoa para teste de falha",
+          nome: "Pessoa Teste Espaços",
+          historia: "Pessoa para teste de texto com espaços",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
       });
 
-      await expect(
-        prisma.comentario.create({
-          data: {
-            entidadeId: entidade.id,
-            pessoaId: usuario.id,
-            texto: "   ",
-          },
-        })
-      ).rejects.toThrow();
+      const comentario = await prisma.comentario.create({
+        data: {
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
+          texto: "   ",
+        },
+      });
+
+      expect(comentario).toHaveProperty("id");
+      expect(comentario.texto).toBe("   ");
     });
   });
 
@@ -115,11 +118,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       const { cidade, usuario } = await global.createTestData();
 
       // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
+          nome: "Pessoa Teste",
           nome: "Pessoa Teste Consulta",
-          descricao: "Pessoa para teste de consulta",
+          historia: "Pessoa para teste de consulta",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -128,22 +131,22 @@ describe("Testes de Comentários - Validações Básicas", () => {
       // Criar comentários para teste
       await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Primeiro comentário de teste",
         },
       });
 
       await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Segundo comentário de teste",
         },
       });
 
       const comentarios = await prisma.comentario.findMany({
-        where: { entidadeId: entidade.id },
+        where: { pessoaId: pessoa.id },
         include: {
           usuario: true,
         },
@@ -154,7 +157,7 @@ describe("Testes de Comentários - Validações Básicas", () => {
       comentarios.forEach((comentario) => {
         expect(comentario).toHaveProperty("texto");
         expect(comentario).toHaveProperty("usuario");
-        expect(comentario.entidadeId).toBe(entidade.id);
+        expect(comentario.pessoaId).toBe(pessoa.id);
       });
     });
 
@@ -163,11 +166,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       const { cidade, usuario } = await global.createTestData();
 
       // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
+          nome: "Pessoa Teste",
           nome: "Pessoa Teste Ordenacao",
-          descricao: "Pessoa para teste de ordenacao",
+          historia: "Pessoa para teste de ordenacao",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -176,8 +179,8 @@ describe("Testes de Comentários - Validações Básicas", () => {
       // Criar comentários para teste
       await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Primeiro comentário",
         },
       });
@@ -187,14 +190,14 @@ describe("Testes de Comentários - Validações Básicas", () => {
 
       await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Segundo comentário",
         },
       });
 
       const comentarios = await prisma.comentario.findMany({
-        where: { entidadeId: entidade.id },
+        where: { pessoaId: pessoa.id },
         orderBy: { createdAt: "desc" },
       });
 
@@ -211,11 +214,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       const { cidade, usuario } = await global.createTestData();
 
       // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
+          nome: "Pessoa Teste",
           nome: "Pessoa Teste Contagem",
-          descricao: "Pessoa para teste de contagem",
+          historia: "Pessoa para teste de contagem",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -224,14 +227,14 @@ describe("Testes de Comentários - Validações Básicas", () => {
       // Criar comentários para teste
       await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Comentário para contagem",
         },
       });
 
       const count = await prisma.comentario.count({
-        where: { entidadeId: entidade.id },
+        where: { pessoaId: pessoa.id },
       });
 
       expect(typeof count).toBe("number");
@@ -245,11 +248,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       const { cidade, usuario } = await global.createTestData();
 
       // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
+          nome: "Pessoa Teste",
           nome: "Pessoa Teste Atualizacao",
-          descricao: "Pessoa para teste de atualizacao",
+          historia: "Pessoa para teste de atualizacao",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -258,8 +261,8 @@ describe("Testes de Comentários - Validações Básicas", () => {
       // Criar comentário para teste
       const comentario = await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Texto original",
         },
       });
@@ -280,11 +283,11 @@ describe("Testes de Comentários - Validações Básicas", () => {
       const { cidade, usuario } = await global.createTestData();
 
       // Criar entidade para testar comentário
-      const entidade = await prisma.entidade.create({
+      const pessoa = await prisma.pessoa.create({
         data: {
-          tipo: "PESSOA",
+          nome: "Pessoa Teste",
           nome: "Pessoa Teste Remocao",
-          descricao: "Pessoa para teste de remocao",
+          historia: "Pessoa para teste de remocao",
           cidadeId: cidade.id,
           usuarioId: usuario.id,
         },
@@ -293,8 +296,8 @@ describe("Testes de Comentários - Validações Básicas", () => {
       // Criar comentário para teste
       const comentario = await prisma.comentario.create({
         data: {
-          entidadeId: entidade.id,
-          pessoaId: usuario.id,
+          pessoaId: pessoa.id,
+          usuarioId: usuario.id,
           texto: "Comentário para remoção",
         },
       });

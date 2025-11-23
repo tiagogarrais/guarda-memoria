@@ -38,13 +38,13 @@ describe("Testes de Integração - Fluxo Completo", () => {
       // 2. Buscar a entidade criada
       const entidades = await prisma.entidade.findMany({
         where: {
-          cidadeId: cidadeId,
+          cidadeId: cidade.id,
           tipo: "PESSOA",
         },
       });
 
       expect(Array.isArray(entidades)).toBe(true);
-      const entidadeEncontrada = entidades.find((e) => e.id === entidadeId);
+      const entidadeEncontrada = entidades.find((e) => e.id === entidade.id);
       expect(entidadeEncontrada).toBeDefined();
       expect(entidadeEncontrada.nome).toContain("Maria Santos");
       expect(entidadeEncontrada.profissao).toBe("Professora");
@@ -52,8 +52,8 @@ describe("Testes de Integração - Fluxo Completo", () => {
       // 3. Curtir a entidade
       const curtida = await prisma.curtida.create({
         data: {
-          entidadeId: entidadeId,
-          usuarioId: usuarioId,
+          entidadeId: entidade.id,
+          usuarioId: usuario.id,
         },
       });
 
@@ -61,12 +61,12 @@ describe("Testes de Integração - Fluxo Completo", () => {
       expect(curtida).toHaveProperty("entidadeId");
       expect(curtida).toHaveProperty("usuarioId");
       expect(curtida).toHaveProperty("createdAt");
-      expect(curtida.entidadeId).toBe(entidadeId);
-      expect(curtida.usuarioId).toBe(usuarioId);
+      expect(curtida.entidadeId).toBe(entidade.id);
+      expect(curtida.usuarioId).toBe(usuario.id);
 
       // 4. Verificar contagem de curtidas
       const count = await prisma.curtida.count({
-        where: { entidadeId: entidadeId },
+        where: { entidadeId: entidade.id },
       });
 
       expect(typeof count).toBe("number");
@@ -75,8 +75,8 @@ describe("Testes de Integração - Fluxo Completo", () => {
       // 5. Adicionar comentário
       const comentario = await prisma.comentario.create({
         data: {
-          pessoaId: entidadeId, // Usando pessoaId por enquanto (compatibilidade)
-          usuarioId: usuarioId,
+          entidadeId: entidade.id, // Usando entidadeId para entidade do tipo PESSOA
+          usuarioId: usuario.id,
           texto:
             "Maria foi uma excelente professora que inspirou muitos alunos!",
         },
@@ -89,7 +89,7 @@ describe("Testes de Integração - Fluxo Completo", () => {
 
       // 6. Buscar comentários
       const comentarios = await prisma.comentario.findMany({
-        where: { entidadeId: entidadeId },
+        where: { entidadeId: entidade.id },
         include: {
           usuario: true,
         },
@@ -136,18 +136,18 @@ describe("Testes de Integração - Fluxo Completo", () => {
       // Primeiro comentário
       const comentario1 = await prisma.comentario.create({
         data: {
-          pessoaId: entidade.id, // Usando pessoaId por compatibilidade
+          entidadeId: entidade.id, // Usando entidadeId para entidade
           usuarioId: usuario.id,
-          texto: "Primeiro comentário",
+          texto: "Primeiro comentário sobre esta entidade!",
         },
       });
 
       // Segundo comentário do mesmo usuário (deve ser permitido)
       const comentario2 = await prisma.comentario.create({
         data: {
-          pessoaId: entidade.id, // Usando pessoaId por compatibilidade
+          entidadeId: entidade.id, // Usando entidadeId para entidade
           usuarioId: usuario.id,
-          texto: "Segundo comentário",
+          texto: "Segundo comentário sobre esta entidade!",
         },
       });
 
@@ -270,7 +270,7 @@ describe("Testes de Integração - Fluxo Completo", () => {
 
       await prisma.comentario.create({
         data: {
-          pessoaId: entidade.id, // Usando pessoaId por compatibilidade
+          entidadeId: entidade.id, // Usando entidadeId para entidade
           usuarioId: usuario.id,
           texto: "Comentário de teste",
         },

@@ -50,6 +50,113 @@ O site promove a conexão intergeracional através de histórias compartilhadas.
 
 [Como contribuir.]
 
+## Desenvolvimento Local
+
+### Pré-requisitos
+
+- Node.js 18+
+- Docker e Docker Compose
+- Git
+
+### Configuração do Ambiente
+
+### Configuração do Ambiente
+
+#### Opção 1: Banco Local (Recomendado para Desenvolvimento)
+
+1. **Instale as dependências:**
+
+   ```bash
+   npm install
+   ```
+
+2. **Configure o banco de dados local:**
+
+   ```bash
+   # Inicie o MySQL local com Docker
+   npm run db:start
+
+   # Aguarde alguns segundos para o banco inicializar
+   # Verifique se está rodando:
+   npm run db:logs
+   ```
+
+3. **Configure as variáveis de ambiente:**
+
+   ```bash
+   # O .env.local já está configurado para o banco local
+   # Verifique se as outras credenciais (Google, Email, FTP) estão corretas
+   ```
+
+4. **Execute as migrações:**
+
+   ```bash
+   npm run build:local  # ou DATABASE_URL="mysql://devuser:devpassword@localhost:3307/guarda_memoria_dev" npx prisma db push
+   ```
+
+5. **Inicie o servidor:**
+
+   ```bash
+   npm run dev:local  # Inicia automaticamente o banco Docker se necessário
+   ```
+
+   Ou manualmente:
+
+   ```bash
+   npm run db:start   # Iniciar banco
+   npm run dev:local  # Iniciar aplicação
+   ```
+
+#### Opção 2: Banco de Produção (Deploy)
+
+Para produção, use o arquivo `.env` com as credenciais do banco remoto.
+
+### Comandos Úteis
+
+```bash
+# Banco de dados local
+npm run db:start    # Iniciar MySQL Docker
+npm run db:stop     # Parar MySQL Docker
+npm run db:reset    # Resetar banco (remove dados)
+npm run db:logs     # Ver logs do banco
+npm run db:ensure   # Verificar/iniciar banco automaticamente
+
+# Desenvolvimento
+npm run dev         # Dev com banco de produção (.env)
+npm run dev:local   # Dev com banco local (inicia DB automaticamente)
+npm run build       # Build com banco de produção
+npm run build:local # Build com banco local
+
+# Testes
+npm test            # Executar testes
+npm run test:watch  # Modo watch
+npm run test:coverage # Com cobertura
+
+# Prisma
+npm run prisma:generate  # Gerar cliente Prisma
+npm run prisma:migrate   # Criar migração
+```
+
+### Estrutura do Banco
+
+O projeto usa **dois ambientes de banco**:
+
+- **Desenvolvimento**: MySQL local via Docker (`docker-compose.yml`)
+- **Produção**: MySQL remoto (Hostinger)
+
+As configurações são separadas:
+
+- `.env.local` → Desenvolvimento
+- `.env` → Produção
+
+### Testes
+
+```bash
+npm test              # Executar todos os testes
+npm run test:watch    # Modo watch
+npm run test:coverage # Com cobertura
+```
+
 ## Licença
 
 [Informações de licença.]

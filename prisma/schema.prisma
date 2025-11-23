@@ -175,7 +175,7 @@ model Pessoa {
 
 model Comentario {
   id        String   @id @default(uuid())
-  pessoaId  String   // Manter temporariamente para migração
+  pessoaId  String?  // Tornar opcional durante migração
   entidadeId String? // Novo campo opcional
   usuarioId String
   texto     String   @db.Text
