@@ -39,7 +39,11 @@ export async function GET(request) {
       where.OR = [
         { nome: { contains: search, mode: "insensitive" } },
         { descricao: { contains: search, mode: "insensitive" } },
-        { tags: { hasSome: search.split(",").map((t) => t.trim()) } },
+        { categoria: { contains: search, mode: "insensitive" } },
+        { profissao: { contains: search, mode: "insensitive" } },
+        { artista: { contains: search, mode: "insensitive" } },
+        { tecnica: { contains: search, mode: "insensitive" } },
+        { tipoColetivo: { contains: search, mode: "insensitive" } },
       ];
     }
 
@@ -174,11 +178,21 @@ export async function POST(request) {
       tipoArquivo, // Para obras de arte
       tamanhoArquivo, // Para obras de arte
       nomeArquivo, // Para obras de arte
+      membrosPrincipais, // Para coletivos organizados
+      dataFormacao, // Para coletivos organizados
+      tipoColetivo, // Para coletivos organizados
     } = body;
 
     if (!tipo || !nome || !cidadeId) {
       return NextResponse.json(
         { error: "Tipo, nome e cidadeId são obrigatórios" },
+        { status: 400 }
+      );
+    }
+
+    if (!descricao || descricao.trim() === "") {
+      return NextResponse.json(
+        { error: "Descrição é obrigatória" },
         { status: 400 }
       );
     }
@@ -242,7 +256,7 @@ export async function POST(request) {
         cidadeId,
         usuarioId: usuario.id,
         categoria,
-        tags,
+        tags: tags ? JSON.stringify(tags) : null,
         // Campos específicos
         dataNascimento: dataNascimento ? new Date(dataNascimento) : null,
         profissao,
@@ -257,6 +271,9 @@ export async function POST(request) {
         tipoArquivo,
         tamanhoArquivo: tamanhoArquivo ? parseInt(tamanhoArquivo) : null,
         nomeArquivo,
+        membrosPrincipais,
+        dataFormacao: dataFormacao ? new Date(dataFormacao) : null,
+        tipoColetivo,
       },
     });
 

@@ -8,7 +8,11 @@
     "start": "next start -p 3000",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.5",
@@ -25,6 +29,9 @@
     "recharts": "^3.3.0"
   },
   "devDependencies": {
-    "prisma": "^6.18.0"
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "prisma": "^6.18.0",
+    "supertest": "^7.1.4"
   }
 }

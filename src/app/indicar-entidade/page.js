@@ -177,6 +177,7 @@ function IndicarEntidadeContent() {
                 type="text"
                 id="profissao"
                 name="profissao"
+                autoComplete="off"
                 value={form.profissao}
                 onChange={handleChange}
                 placeholder="Ex: professor, médico, artista..."
@@ -449,7 +450,7 @@ function IndicarEntidadeContent() {
       }}
     >
       <h1>Registrar Memória</h1>
-      <p>Compartilhe a história de algo ou alguém que marcou sua cidade.</p>
+      <p>Compartilhe memórias que marcaram ou ainda marcam a sua cidade.</p>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -533,6 +534,7 @@ function IndicarEntidadeContent() {
             value={form.nome}
             onChange={handleChange}
             required
+            autocomplete="off"
             placeholder={
               form.tipo === "PESSOA"
                 ? "Nome completo da pessoa"
@@ -611,6 +613,7 @@ function IndicarEntidadeContent() {
             type="text"
             id="categoria"
             name="categoria"
+            autocomplete="off"
             value={form.categoria}
             onChange={handleChange}
             placeholder={
