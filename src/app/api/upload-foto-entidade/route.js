@@ -146,7 +146,7 @@ export async function POST(request) {
       await client.uploadFrom(stream, remotePath);
 
       // Gerar URL pública do arquivo
-      const publicUrl = `https://files.admtiago.com.br/guarda-memoria/${entidadeId}/${tipoDir}/${fileName}`;
+      const publicUrl = `https://files.admtiago.com.br/${entidadeId}/${tipoDir}/${fileName}`;
 
       // Atualizar a entidade com a URL da foto
       await prisma.entidade.update({
