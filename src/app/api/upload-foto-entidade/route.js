@@ -27,7 +27,7 @@ export async function POST(request) {
       );
     }
 
-    // Verificar se a entidade existe e é uma obra de arte
+    // Verificar se a entidade existe
     const prisma = new PrismaClient();
     const entidade = await prisma.entidade.findUnique({
       where: { id: entidadeId },
@@ -41,50 +41,32 @@ export async function POST(request) {
       );
     }
 
-    if (entidade.tipo !== "OBRA_ARTE") {
+    // Validar tipo de arquivo (apenas imagens para foto)
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "image/svg+xml",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
       await prisma.$disconnect();
       return NextResponse.json(
-        { error: "Esta entidade não é uma obra de arte" },
+        {
+          error:
+            "Tipo de arquivo não permitido. Apenas imagens são aceitas para foto.",
+        },
         { status: 400 }
       );
     }
 
-    // Determinar tipo de arquivo baseado na extensão e MIME type
-    const fileExtension = path.extname(file.name).toLowerCase();
-    const mimeType = file.type.toLowerCase();
-
-    let tipoArquivo = "documento"; // padrão
-
-    if (
-      mimeType.startsWith("image/") ||
-      [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"].includes(fileExtension)
-    ) {
-      tipoArquivo = "imagem";
-    } else if (
-      mimeType.startsWith("audio/") ||
-      [".mp3", ".wav", ".ogg", ".m4a", ".flac"].includes(fileExtension)
-    ) {
-      tipoArquivo = "audio";
-    } else if (
-      mimeType.startsWith("video/") ||
-      [".mp4", ".avi", ".mov", ".wmv", ".mkv"].includes(fileExtension)
-    ) {
-      tipoArquivo = "video";
-    } else if (
-      [".pdf", ".doc", ".docx", ".txt", ".rtf"].includes(fileExtension) ||
-      mimeType === "application/pdf" ||
-      mimeType.startsWith("text/") ||
-      mimeType.includes("document")
-    ) {
-      tipoArquivo = "documento";
-    }
-
-    // Validar tamanho do arquivo (máximo 100MB para obras de arte)
-    const maxSize = 100 * 1024 * 1024; // 100MB
+    // Validar tamanho do arquivo (máximo 10MB para fotos)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       await prisma.$disconnect();
       return NextResponse.json(
-        { error: "Arquivo muito grande. Máximo 100MB" },
+        { error: "Arquivo muito grande. Máximo 10MB para fotos" },
         { status: 400 }
       );
     }
@@ -130,7 +112,7 @@ export async function POST(request) {
 
       // Criar diretório da entidade se não existir
       const entidadeDir = entidadeId;
-      const tipoDir = "obras-arte";
+      const tipoDir = "fotos";
 
       try {
         // Criar diretório da entidade
@@ -141,7 +123,7 @@ export async function POST(request) {
         }
         await client.cd(entidadeDir);
 
-        // Criar subdiretório para obras de arte
+        // Criar subdiretório para fotos
         try {
           await client.send(`MKD ${tipoDir}`);
         } catch (error) {
@@ -157,6 +139,7 @@ export async function POST(request) {
       }
 
       // Gerar nome único para o arquivo
+      const fileExtension = path.extname(file.name).toLowerCase();
       const fileName = `${randomUUID()}${fileExtension}`;
       const remotePath = fileName;
 
@@ -170,14 +153,11 @@ export async function POST(request) {
       // Gerar URL pública do arquivo
       const publicUrl = `https://files.admtiago.com.br/guarda-memoria/${entidadeId}/${tipoDir}/${fileName}`;
 
-      // Atualizar a entidade com as informações do arquivo
+      // Atualizar a entidade com a URL da foto
       await prisma.entidade.update({
         where: { id: entidadeId },
         data: {
-          arquivoUrl: publicUrl,
-          tipoArquivo,
-          tamanhoArquivo: file.size,
-          nomeArquivo: file.name,
+          fotoUrl: publicUrl,
         },
       });
 
@@ -185,9 +165,8 @@ export async function POST(request) {
 
       return NextResponse.json({
         success: true,
-        arquivo: {
+        foto: {
           url: publicUrl,
-          tipoArquivo,
           tamanhoArquivo: file.size,
           nomeArquivo: file.name,
         },

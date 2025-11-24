@@ -16,7 +16,6 @@ function IndicarEntidadeContent() {
     tipo: "PESSOA",
     nome: "",
     descricao: "",
-    fotoUrl: "",
     categoria: "",
     tags: "",
     // Campos específicos por tipo
@@ -38,6 +37,7 @@ function IndicarEntidadeContent() {
     tipoColetivo: "",
   });
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFoto, setSelectedFoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -117,6 +117,26 @@ function IndicarEntidadeContent() {
       }
 
       const entidade = await response.json();
+
+      // Se houver foto selecionada, fazer upload
+      if (selectedFoto) {
+        const fotoFormData = new FormData();
+        fotoFormData.append("file", selectedFoto);
+        fotoFormData.append("entidadeId", entidade.id);
+
+        const fotoUploadResponse = await fetch("/api/upload-foto-entidade", {
+          method: "POST",
+          body: fotoFormData,
+        });
+
+        if (!fotoUploadResponse.ok) {
+          const fotoError = await fotoUploadResponse.json();
+          // Entidade foi criada, mas upload da foto falhou - informar ao usuário
+          alert(
+            `Entidade registrada, mas houve erro no upload da foto: ${fotoError.error}`
+          );
+        }
+      }
 
       // Se for obra de arte e houver arquivo, fazer upload
       if (form.tipo === "OBRA_ARTE" && selectedFile) {
@@ -590,14 +610,13 @@ function IndicarEntidadeContent() {
         </div>
 
         <div>
-          <label htmlFor="fotoUrl">URL da Foto (opcional):</label>
+          <label htmlFor="foto">Foto (opcional):</label>
           <input
-            type="url"
-            id="fotoUrl"
-            name="fotoUrl"
-            value={form.fotoUrl}
-            onChange={handleChange}
-            placeholder="https://exemplo.com/foto.jpg"
+            type="file"
+            id="foto"
+            name="foto"
+            accept="image/*"
+            onChange={(e) => setSelectedFoto(e.target.files[0])}
             style={{
               width: "100%",
               padding: "8px",
@@ -605,6 +624,22 @@ function IndicarEntidadeContent() {
               borderRadius: 4,
             }}
           />
+          <small style={{ color: "#666", fontSize: "12px" }}>
+            Tipos aceitos: JPG, PNG, GIF, WebP, SVG. Máximo 10MB.
+          </small>
+          {selectedFoto && (
+            <div
+              style={{
+                marginTop: "8px",
+                padding: "8px",
+                backgroundColor: "#f8f9fa",
+                borderRadius: 4,
+              }}
+            >
+              <strong>Foto selecionada:</strong> {selectedFoto.name} (
+              {(selectedFoto.size / 1024 / 1024).toFixed(2)} MB)
+            </div>
+          )}
         </div>
 
         <div>
