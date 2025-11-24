@@ -123,7 +123,7 @@ export async function POST(request) {
       await client.uploadFrom(stream, remotePath);
 
       // Gerar URL pública do arquivo
-      const publicUrl = `https://files.admtiago.com.br/${pessoaId}/${tipoDir}/${fileName}`;
+      const publicUrl = `https://files.admtiago.com.br/guarda-memoria/${pessoaId}/${tipoDir}/${fileName}`;
 
       // Salvar no banco de dados
       const prisma = new PrismaClient();
