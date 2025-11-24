@@ -19,6 +19,8 @@ export default function EntidadeDetalhes() {
   const [uploading, setUploading] = useState(false);
   const [medias, setMedias] = useState([]);
   const [jaCurtiu, setJaCurtiu] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalImage, setModalImage] = useState(null);
 
   useEffect(() => {
     if (!session) {
@@ -285,6 +287,11 @@ export default function EntidadeDetalhes() {
                 borderRadius: "50%",
                 objectFit: "cover",
                 marginRight: "16px",
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                setModalImage(entidade.fotoUrl);
+                setShowModal(true);
               }}
             />
           )}
@@ -703,6 +710,59 @@ export default function EntidadeDetalhes() {
           </p>
         )}
       </div>
+
+      {/* Modal para imagem ampliada */}
+      {showModal && modalImage && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={modalImage}
+              alt="Imagem ampliada"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                position: "absolute",
+                top: "-40px",
+                right: "0",
+                background: "none",
+                border: "none",
+                color: "white",
+                fontSize: "24px",
+                cursor: "pointer",
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
