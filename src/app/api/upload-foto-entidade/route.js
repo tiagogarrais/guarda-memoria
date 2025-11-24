@@ -83,24 +83,19 @@ export async function POST(request) {
         port: parseInt(process.env.FTP_PORT) || 21,
       });
 
-      // Tentar navegar para public_html se existir
-      try {
-        await client.cd("public_html");
-        console.log("Navegou para public_html");
-      } catch (error) {
-        // Se não conseguir, já estamos no diretório correto
-        console.log("Já estamos no diretório raiz do site");
-      }
-
       // Navegar para o diretório base configurado
-      const basePath = process.env.FTP_BASE_PATH || "guarda-memoria";
+      const basePath = process.env.FTP_BASE_PATH || "";
 
       try {
-        await client.cd(basePath);
+        if (basePath) {
+          await client.cd(basePath);
+        }
       } catch (error) {
         try {
-          await client.send(`MKD ${basePath}`);
-          await client.cd(basePath);
+          if (basePath) {
+            await client.send(`MKD ${basePath}`);
+            await client.cd(basePath);
+          }
         } catch (createError) {
           await prisma.$disconnect();
           return NextResponse.json(
