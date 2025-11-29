@@ -3,6 +3,20 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import SiteHeader from "@/components/SiteHeader";
+
+// Adicionar estilos globais para animações
+if (typeof document !== "undefined") {
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export default function EntidadeDetalhes() {
   const { id } = useParams();
@@ -14,24 +28,30 @@ export default function EntidadeDetalhes() {
   const [novoComentario, setNovoComentario] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadType, setUploadType] = useState("foto");
-  const [uploading, setUploading] = useState(false);
   const [medias, setMedias] = useState([]);
   const [jaCurtiu, setJaCurtiu] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalImage, setModalImage] = useState(null);
+  const [comentarioMediaType, setComentarioMediaType] = useState(null);
+  const [comentarioFile, setComentarioFile] = useState(null);
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [recordedChunks, setRecordedChunks] = useState([]);
 
   useEffect(() => {
     if (!session) {
       router.push("/");
       return;
     }
-    if (id) {
+    if (id && id.trim()) {
       fetchEntidade();
       fetchComentarios();
       verificarInteracoes();
       fetchMedias();
+    } else {
+      setError("ID da entidade inválido");
+      setLoading(false);
     }
   }, [session, id, router]);
 
@@ -61,10 +81,16 @@ export default function EntidadeDetalhes() {
   const fetchEntidade = async () => {
     try {
       const response = await fetch(`/api/entidades/${id}`);
-      if (!response.ok) throw new Error("Entidade não encontrada");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Entidade não encontrada");
+      }
+
       const data = await response.json();
       setEntidade(data);
     } catch (err) {
+      console.error("Erro ao buscar entidade:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -96,21 +122,166 @@ export default function EntidadeDetalhes() {
 
   const handleComentario = async (e) => {
     e.preventDefault();
-    if (!novoComentario.trim()) return;
 
+    // Permitir envio se há texto OU arquivo
+    const hasText = novoComentario.trim().length > 0;
+    const hasFile = !!comentarioFile;
+
+    if (!hasText && !hasFile) {
+      alert(
+        "Por favor, digite um comentário ou selecione/anexe um arquivo para enviar."
+      );
+      return;
+    }
+
+    setEnviandoComentario(true);
     try {
+      let comentarioData = {
+        entidadeId: id,
+        texto: hasText ? novoComentario.trim() : null,
+      };
+
+      // Se há arquivo, fazer upload primeiro
+      if (comentarioFile) {
+        const formData = new FormData();
+        formData.append("file", comentarioFile);
+        formData.append("entidadeId", id);
+        formData.append("tipo", comentarioMediaType);
+
+        const uploadResponse = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!uploadResponse.ok) throw new Error("Erro no upload da mídia");
+
+        const uploadData = await uploadResponse.json();
+        comentarioData.mediaUrl = uploadData.media.url;
+        comentarioData.mediaTipo = comentarioMediaType;
+      }
+
       const response = await fetch("/api/comentarios", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entidadeId: id, texto: novoComentario }),
+        body: JSON.stringify(comentarioData),
       });
 
       if (!response.ok) throw new Error("Erro ao enviar comentário");
 
       setNovoComentario("");
+      setComentarioFile(null);
+      setComentarioMediaType(null);
+      setIsRecording(false);
+      setMediaRecorder(null);
+      setRecordedChunks([]);
       fetchComentarios(); // Recarregar comentários
     } catch (err) {
       alert("Erro ao enviar comentário: " + err.message);
+    } finally {
+      setEnviandoComentario(false);
+    }
+  };
+
+  const handleMediaSelect = (type) => {
+    setComentarioMediaType(type);
+    const input = document.createElement("input");
+    input.type = "file";
+
+    let acceptTypes = "";
+    switch (type) {
+      case "foto":
+        acceptTypes = "image/*";
+        break;
+      case "video":
+        acceptTypes = "video/*";
+        break;
+      case "audio":
+        acceptTypes = "audio/*,.mp3,.wav,.ogg,.m4a,.flac";
+        break;
+      case "documento":
+        acceptTypes = ".pdf,.doc,.docx,.txt,.rtf,.odt";
+        break;
+    }
+    input.accept = acceptTypes;
+
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        // Validação de tamanho
+        const maxSizes = {
+          foto: 10 * 1024 * 1024, // 10MB
+          video: 100 * 1024 * 1024, // 100MB
+          audio: 50 * 1024 * 1024, // 50MB
+          documento: 25 * 1024 * 1024, // 25MB
+        };
+
+        if (file.size > maxSizes[type]) {
+          alert(
+            `Arquivo muito grande. Máximo ${
+              maxSizes[type] / 1024 / 1024
+            }MB para ${type}.`
+          );
+          return;
+        }
+
+        setComentarioFile(file);
+      }
+    };
+    input.click();
+  };
+
+  const removeComentarioMedia = () => {
+    setComentarioFile(null);
+    setComentarioMediaType(null);
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
+        const audioFile = new File([audioBlob], `audio-${Date.now()}.webm`, {
+          type: "audio/webm",
+        });
+
+        // Validar tamanho do arquivo gravado (máximo 50MB)
+        if (audioFile.size > 50 * 1024 * 1024) {
+          alert("Áudio gravado muito grande. Máximo 50MB.");
+          // Parar todas as tracks do stream
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        setComentarioFile(audioFile);
+        setComentarioMediaType("audio");
+
+        // Parar todas as tracks do stream
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      setMediaRecorder(recorder);
+      setRecordedChunks(chunks);
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Erro ao iniciar gravação:", error);
+      alert("Erro ao acessar microfone. Verifique as permissões.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
     }
   };
 
@@ -259,6 +430,9 @@ export default function EntidadeDetalhes() {
         fontFamily: "Arial, sans-serif",
       }}
     >
+      {/* Header Geral do Site */}
+      <SiteHeader />
+
       {/* Header da Entidade */}
       <div
         style={{
@@ -571,89 +745,256 @@ export default function EntidadeDetalhes() {
         </div>
       )}
 
-      {/* Upload de Mídia */}
-      <div style={{ marginBottom: "24px" }}>
-        <h3>Adicionar Mídia</h3>
-        <form
-          onSubmit={handleUpload}
-          style={{ display: "flex", gap: "8px", alignItems: "center" }}
-        >
-          <select
-            value={uploadType}
-            onChange={(e) => setUploadType(e.target.value)}
-            style={{
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: 4,
-            }}
-          >
-            <option value="foto">Foto</option>
-            <option value="video">Vídeo</option>
-            <option value="audio">Áudio</option>
-          </select>
-          <input
-            type="file"
-            accept={
-              uploadType === "foto"
-                ? "image/*"
-                : uploadType === "video"
-                ? "video/*"
-                : "audio/*"
-            }
-            onChange={(e) => setSelectedFile(e.target.files[0])}
-            style={{ padding: "8px" }}
-          />
-          <button
-            type="submit"
-            disabled={!selectedFile || uploading}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
-            }}
-          >
-            {uploading ? "Enviando..." : "Enviar"}
-          </button>
-        </form>
-      </div>
-
       {/* Comentários */}
       <div>
         <h2>Comentários</h2>
 
-        {/* Formulário de comentário */}
-        <form onSubmit={handleComentario} style={{ marginBottom: "24px" }}>
-          <textarea
-            value={novoComentario}
-            onChange={(e) => setNovoComentario(e.target.value)}
-            placeholder="Escreva um comentário..."
-            rows={3}
+        {/* Formulário de comentário moderno */}
+        <div style={{ marginBottom: "24px" }}>
+          <div
             style={{
-              width: "100%",
-              padding: "12px",
-              border: "1px solid #ccc",
-              borderRadius: 4,
-              resize: "vertical",
-            }}
-          />
-          <button
-            type="submit"
-            style={{
-              marginTop: "8px",
-              padding: "8px 16px",
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              cursor: "pointer",
+              backgroundColor: "white",
+              border: "1px solid #ddd",
+              borderRadius: "20px",
+              padding: "16px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
             }}
           >
-            Comentar
-          </button>
-        </form>
+            {/* Prévia da mídia selecionada */}
+            {comentarioFile && (
+              <div
+                style={{
+                  marginBottom: "12px",
+                  padding: "8px",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  {comentarioMediaType === "foto" && <span>📷</span>}
+                  {comentarioMediaType === "video" && <span>🎥</span>}
+                  {comentarioMediaType === "audio" && <span>🎵</span>}
+                  {comentarioMediaType === "documento" && <span>📄</span>}
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: "500" }}>
+                      {comentarioFile.name}
+                    </div>
+                    <div style={{ fontSize: "12px", color: "#666" }}>
+                      {(comentarioFile.size / 1024 / 1024).toFixed(2)} MB
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={removeComentarioMedia}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#666",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+            )}
+
+            {/* Indicador de gravação */}
+            {isRecording && (
+              <div
+                style={{
+                  marginBottom: "12px",
+                  padding: "8px",
+                  backgroundColor: "#f8d7da",
+                  border: "1px solid #f5c6cb",
+                  borderRadius: "8px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  color: "#721c24",
+                }}
+              >
+                <span
+                  style={{ fontSize: "16px", animation: "pulse 1s infinite" }}
+                >
+                  🔴
+                </span>
+                <span style={{ fontSize: "14px", fontWeight: "500" }}>
+                  Gravando áudio... Clique em ⏹️ para parar
+                </span>
+              </div>
+            )}
+
+            {/* Barra de entrada */}
+            <form
+              onSubmit={handleComentario}
+              style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}
+            >
+              <div style={{ flex: 1, position: "relative" }}>
+                <textarea
+                  value={novoComentario}
+                  onChange={(e) => setNovoComentario(e.target.value)}
+                  placeholder="Escreva um comentário..."
+                  rows={1}
+                  style={{
+                    width: "100%",
+                    minHeight: "40px",
+                    maxHeight: "120px",
+                    padding: "12px 16px",
+                    border: "1px solid #ddd",
+                    borderRadius: "20px",
+                    resize: "none",
+                    outline: "none",
+                    fontFamily: "inherit",
+                    fontSize: "14px",
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      const fakeEvent = { preventDefault: () => {} };
+                      handleComentario(fakeEvent);
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Botões de mídia */}
+              <div style={{ display: "flex", gap: "4px", marginRight: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => handleMediaSelect("foto")}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "50%",
+                    backgroundColor: "#f8f9fa",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                  }}
+                  title="Adicionar foto"
+                >
+                  📷
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMediaSelect("video")}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "50%",
+                    backgroundColor: "#f8f9fa",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                  }}
+                  title="Adicionar vídeo"
+                >
+                  🎥
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMediaSelect("audio")}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "50%",
+                    backgroundColor: "#f8f9fa",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                  }}
+                  title="Selecionar arquivo de áudio"
+                >
+                  🎵
+                </button>
+                <button
+                  type="button"
+                  onClick={isRecording ? stopRecording : startRecording}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "50%",
+                    backgroundColor: isRecording ? "#dc3545" : "#f8f9fa",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                    color: isRecording ? "white" : "inherit",
+                  }}
+                  title={isRecording ? "Parar gravação" : "Gravar áudio"}
+                >
+                  {isRecording ? "⏹️" : "�"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMediaSelect("documento")}
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    border: "none",
+                    borderRadius: "50%",
+                    backgroundColor: "#f8f9fa",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "16px",
+                  }}
+                  title="Adicionar documento"
+                >
+                  📄
+                </button>
+              </div>
+
+              {/* Botão enviar */}
+              <button
+                type="submit"
+                disabled={
+                  (!(novoComentario.trim().length > 0) && !comentarioFile) ||
+                  enviandoComentario
+                }
+                style={{
+                  padding: "8px 16px",
+                  backgroundColor:
+                    (!(novoComentario.trim().length > 0) && !comentarioFile) ||
+                    enviandoComentario
+                      ? "#ccc"
+                      : "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "20px",
+                  cursor:
+                    (!(novoComentario.trim().length > 0) && !comentarioFile) ||
+                    enviandoComentario
+                      ? "not-allowed"
+                      : "pointer",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  minWidth: "60px",
+                }}
+              >
+                {enviandoComentario ? "..." : "Enviar"}
+              </button>
+            </form>
+          </div>
+        </div>
 
         {/* Lista de comentários */}
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -699,7 +1040,76 @@ export default function EntidadeDetalhes() {
                   </span>
                 </div>
               </div>
-              <p style={{ margin: 0 }}>{comentario.texto}</p>
+              {comentario.texto && (
+                <p style={{ margin: "0 0 12px 0" }}>{comentario.texto}</p>
+              )}
+
+              {/* Mídia do comentário */}
+              {comentario.mediaUrl && (
+                <div style={{ marginTop: "8px" }}>
+                  {comentario.mediaTipo === "foto" && (
+                    <img
+                      src={comentario.mediaUrl}
+                      alt="Foto do comentário"
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "300px",
+                        borderRadius: "8px",
+                        objectFit: "cover",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => {
+                        setModalImage(comentario.mediaUrl);
+                        setShowModal(true);
+                      }}
+                    />
+                  )}
+                  {comentario.mediaTipo === "video" && (
+                    <video
+                      src={comentario.mediaUrl}
+                      controls
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "300px",
+                        borderRadius: "8px",
+                      }}
+                    />
+                  )}
+                  {comentario.mediaTipo === "audio" && (
+                    <audio
+                      src={comentario.mediaUrl}
+                      controls
+                      style={{ width: "100%" }}
+                    />
+                  )}
+                  {comentario.mediaTipo === "documento" && (
+                    <div
+                      style={{
+                        padding: "12px",
+                        backgroundColor: "#f8f9fa",
+                        borderRadius: "8px",
+                        border: "1px solid #dee2e6",
+                      }}
+                    >
+                      <a
+                        href={comentario.mediaUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          textDecoration: "none",
+                          color: "#007bff",
+                        }}
+                      >
+                        <span style={{ fontSize: "20px" }}>📄</span>
+                        <span>Documento anexado - Clique para baixar</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ))}
         </div>

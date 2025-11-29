@@ -6,8 +6,10 @@ import prisma from "@/lib/prisma";
 import { sendVerificationRequest } from "@/lib/email";
 
 export const authOptions = {
+  debug: true,
   adapter: PrismaAdapter(prisma),
-  debug: process.env.NODE_ENV === "development",
+  // Permitir account linking automático
+  allowDangerousEmailAccountLinking: true,
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -28,42 +30,37 @@ export const authOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "database",
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
     signIn: "/auth/signin",
+    signOut: "/",
     error: "/auth/error",
   },
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
-        console.log("SignIn callback:", {
-          user: user?.email,
-          account: account?.provider,
-          userId: user?.id,
-          userIdType: typeof user?.id,
+        console.log("SignIn attempt:", { 
+          email: user?.email, 
+          provider: account?.provider 
         });
 
-        // Criar perfil de usuário se não existir
-        if (user?.email) {
+        // Se for Google OAuth, verificar se já existe um usuário com o mesmo email
+        if (account?.provider === "google" && user?.email) {
           const existingUser = await prisma.user.findUnique({
             where: { email: user.email },
-            include: { profile: true },
           });
 
-          if (existingUser && !existingUser.profile) {
-            // Criar perfil na tabela Usuario
-            await prisma.usuario.create({
-              data: {
-                userId: existingUser.id,
-                fullName: user.name || "",
-                fotoPerfilUrl: user.image || "",
-              },
-            });
-            console.log("Perfil de usuário criado para:", user.email);
+          if (existingUser) {
+            console.log("Usuário existente encontrado, permitindo vinculação:", existingUser.id);
+            // Permite a vinculação da conta Google ao usuário existente
+            return true;
           }
         }
 
+        // Para outros casos, sempre permitir
         return true;
       } catch (error) {
         console.error("Erro no callback signIn:", error);
@@ -72,23 +69,16 @@ export const authOptions = {
     },
     async session({ session, token }) {
       try {
-        // Para database sessions, o id pode não vir no token, buscar pelo email
-        if (session.user.email) {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: session.user.email },
-          });
-          if (dbUser) {
-            session.user.id = dbUser.id;
-          }
-        } else if (token && token.id) {
+        // Adicionar o id do usuário do token
+        if (token?.id) {
           session.user.id = token.id;
         }
 
         // Adicionar campos do perfil da tabela Usuario
-        if (session.user.id) {
+        if (token?.id) {
           try {
             const profile = await prisma.usuario.findUnique({
-              where: { userId: session.user.id },
+              where: { userId: token.id },
             });
             if (profile) {
               session.user = {
@@ -111,22 +101,35 @@ export const authOptions = {
         return session;
       }
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       try {
-        if (user) {
-          console.log(
-            "JWT callback - user.id:",
-            user.id,
-            "type:",
-            typeof user.id
-          );
+        // Adicionar o id do usuário ao token quando ele faz login
+        if (user?.id) {
           token.id = user.id;
         }
+
+        // Se for um novo login OAuth, buscar o usuário existente
+        if (account?.provider === "google" && profile?.email) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: profile.email },
+          });
+          if (existingUser) {
+            token.id = existingUser.id;
+          }
+        }
+
         return token;
       } catch (error) {
         console.error("Erro no callback JWT:", error);
         return token;
       }
+    },
+    async redirect({ url, baseUrl }) {
+      // Permite redirecionamentos externos (como Google OAuth)
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Ou se a URL é relativa, prefixa com baseUrl
+      if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
     },
   },
 };

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import InputMask from "react-input-mask";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function Profile() {
   const { data: session, status } = useSession();
@@ -274,6 +275,9 @@ export default function Profile() {
         fontFamily: "Arial, sans-serif",
       }}
     >
+      {/* Header Geral do Site */}
+      <SiteHeader />
+
       <h1>Complete seu Perfil</h1>
 
       <div

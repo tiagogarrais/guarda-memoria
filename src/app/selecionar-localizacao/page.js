@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function SelecionarLocalizacao() {
   const { data: session } = useSession();
@@ -97,6 +98,9 @@ export default function SelecionarLocalizacao() {
         fontFamily: "Arial, sans-serif",
       }}
     >
+      {/* Header Geral do Site */}
+      <SiteHeader />
+
       <h1>Selecionar Localização</h1>
       <p>
         Escolha o estado e a cidade para ver as pessoas cadastradas e

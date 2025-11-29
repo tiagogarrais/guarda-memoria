@@ -1,196 +1,22 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
-import Link from "next/link";
-import { useSession, signOut, signIn } from "next-auth/react";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import "./globals.css";
-
-function Header() {
-  const { data: session } = useSession();
-  const router = useRouter();
-
-  const handleTrocarCidade = () => {
-    // Limpar cidade selecionada do localStorage
-    localStorage.removeItem("cidadeSelecionada");
-    // Redirecionar para seleção de localização
-    router.push("/selecionar-localizacao");
-  };
-
-  return (
-    <header
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: "#fff",
-        borderBottom: "1px solid #e0e0e0",
-        padding: "12px 24px",
-        zIndex: 1000,
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            textDecoration: "none",
-            color: "#333",
-            fontSize: "24px",
-            fontWeight: "bold",
-          }}
-        >
-          Guarda Memória
-        </Link>
-
-        <nav>
-          {session ? (
-            <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-              <button
-                onClick={handleTrocarCidade}
-                style={{
-                  backgroundColor: "#6c757d",
-                  color: "white",
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-                title="Trocar de cidade"
-              >
-                🏙️ Trocar Cidade
-              </button>
-              <Link
-                href="/profile"
-                style={{
-                  color: "#007bff",
-                  textDecoration: "none",
-                  padding: "8px 12px",
-                  borderRadius: "4px",
-                  transition: "background-color 0.2s",
-                }}
-              >
-                Meu Perfil
-              </Link>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("cidadeSelecionada");
-                  signOut();
-                }}
-                style={{
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  padding: "8px 12px",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                }}
-              >
-                Sair
-              </button>
-            </div>
-          ) : (
-            <Link
-              href="/auth/signin"
-              style={{
-                backgroundColor: "#007bff",
-                color: "white",
-                textDecoration: "none",
-                padding: "8px 16px",
-                borderRadius: "4px",
-                fontSize: "14px",
-                fontWeight: "500",
-                display: "inline-block",
-              }}
-            >
-              Entrar
-            </Link>
-          )}
-        </nav>
-      </div>
-    </header>
-  );
-}
-
-function Footer() {
-  return (
-    <footer
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: "#f8f9fa",
-        borderTop: "1px solid #e0e0e0",
-        padding: "12px 24px",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          textAlign: "center",
-          color: "#6c757d",
-          fontSize: "14px",
-        }}
-      >
-        © 2025 Guarda Memória. Todos os direitos reservados.
-      </div>
-    </footer>
-  );
-}
+import PWA from "@/components/PWA";
 
 export default function RootLayout({ children }) {
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .then((registration) => {
-          console.log("SW registered: ", registration);
-        })
-        .catch((error) => {
-          console.log("SW registration failed: ", error);
-        });
-    }
-  }, []);
-
   return (
     <html lang="pt-BR">
       <head>
-        <link rel="manifest" href="/manifest.json" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#007bff" />
+        <meta name="description" content="Preserve memórias de pessoas em cidades brasileiras" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.ico" />
+        <title>Guarda Memória</title>
       </head>
-      <body style={{ margin: 0, padding: 0 }}>
-        <SessionProvider>
-          <Header />
-          <main
-            style={{
-              marginTop: "80px", // Altura do header
-              marginBottom: "60px", // Altura do footer
-              minHeight: "calc(100vh - 140px)", // Altura total menos header e footer
-              paddingBottom: "4rem", // Espaço adicional no final das páginas
-            }}
-          >
-            {children}
-          </main>
-          <Footer />
-        </SessionProvider>
+      <body>
+        <SessionProvider>{children}</SessionProvider>
+        <PWA />
       </body>
     </html>
   );

@@ -19,11 +19,18 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const pessoaId = formData.get("pessoaId");
+    const entidadeId = formData.get("entidadeId");
     const tipo = formData.get("tipo");
 
-    if (!file || !pessoaId || !tipo) {
+    // Aceitar pessoaId OU entidadeId
+    const recursoId = pessoaId || entidadeId;
+
+    if (!file || !recursoId || !tipo) {
       return NextResponse.json(
-        { error: "Arquivo, pessoaId e tipo são obrigatórios" },
+        {
+          error:
+            "Arquivo, recursoId (pessoaId ou entidadeId) e tipo são obrigatórios",
+        },
         { status: 400 }
       );
     }
@@ -82,8 +89,10 @@ export async function POST(request) {
             { status: 500 }
           );
         }
-      } // Criar diretório da pessoa se não existir
-      const pessoaDir = pessoaId;
+      }
+
+      // Criar diretório da pessoa se não existir
+      const pessoaDir = recursoId;
       const tipoDir =
         tipo === "foto" ? "fotos" : tipo === "video" ? "videos" : "audios";
 

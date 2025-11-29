@@ -42,11 +42,11 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { entidadeId, texto } = body;
+    const { entidadeId, texto, mediaUrl, mediaTipo } = body;
 
-    if (!entidadeId || !texto) {
+    if (!entidadeId || (!texto && !mediaUrl)) {
       return NextResponse.json(
-        { error: "entidadeId e texto são obrigatórios" },
+        { error: "entidadeId e pelo menos texto ou mediaUrl são obrigatórios" },
         { status: 400 }
       );
     }
@@ -77,7 +77,9 @@ export async function POST(request) {
       data: {
         entidadeId,
         usuarioId: usuario.id,
-        texto,
+        texto: texto || null,
+        mediaUrl: mediaUrl || null,
+        mediaTipo: mediaTipo || null,
       },
       include: {
         usuario: { select: { fullName: true, fotoPerfilUrl: true } },

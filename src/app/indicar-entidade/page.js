@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import SiteHeader from "@/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -469,6 +470,9 @@ function IndicarEntidadeContent() {
         fontFamily: "Arial, sans-serif",
       }}
     >
+      {/* Header Geral do Site */}
+      <SiteHeader />
+
       <h1>Registrar Memória</h1>
       <p>Compartilhe memórias que marcaram ou ainda marcam a sua cidade.</p>
 

@@ -178,7 +178,9 @@ model Comentario {
   pessoaId  String?  // Tornar opcional durante migração
   entidadeId String? // Novo campo opcional
   usuarioId String
-  texto     String   @db.Text
+  texto     String?  @db.Text // Tornar opcional para comentários apenas com mídia
+  mediaUrl  String?  // URL da mídia anexada (foto, vídeo, áudio, documento)
+  mediaTipo String?  // Tipo da mídia: 'foto', 'video', 'audio', 'documento'
   createdAt DateTime @default(now())
 
   pessoa    Pessoa?    @relation(fields: [pessoaId], references: [id], onDelete: Cascade)

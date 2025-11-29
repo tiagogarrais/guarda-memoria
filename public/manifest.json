@@ -3,19 +3,42 @@
   "short_name": "GuardaMemoria",
   "description": "Preserve memórias de pessoas em cidades brasileiras",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#007bff",
+  "categories": ["social", "lifestyle", "education"],
+  "lang": "pt-BR",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Minhas Memórias",
+      "short_name": "Memórias",
+      "description": "Ver minhas memórias salvas",
+      "url": "/entidades",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Adicionar Memória",
+      "short_name": "Adicionar",
+      "description": "Adicionar nova memória",
+      "url": "/indicar-entidade",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

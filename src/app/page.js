@@ -4,6 +4,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SiteHeader from "@/components/SiteHeader";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -47,24 +48,36 @@ export default function Home() {
     // Se não tem, mostrar opção de selecionar
     if (!cidadeSelecionada) {
       return (
-        <div style={{ textAlign: "center", padding: "50px" }}>
-          <h1>Bem-vindo ao Guarda Memória!</h1>
-          <p>Você está logado. Escolha sua cidade para começar.</p>
-          <Link href="/selecionar-localizacao">
-            <button
-              style={{
-                padding: "12px 24px",
-                backgroundColor: "#007bff",
-                color: "white",
-                border: "none",
-                borderRadius: 4,
-                cursor: "pointer",
-                fontSize: "16px",
-              }}
-            >
-              Selecionar Cidade
-            </button>
-          </Link>
+        <div
+          style={{
+            maxWidth: 1200,
+            margin: "0 auto",
+            padding: "24px",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          {/* Header */}
+          <SiteHeader />
+
+          <div style={{ textAlign: "center", padding: "50px 0" }}>
+            <h1>Bem-vindo ao Guarda Memória!</h1>
+            <p>Você está logado. Escolha sua cidade para começar.</p>
+            <Link href="/selecionar-localizacao">
+              <button
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  fontSize: "16px",
+                }}
+              >
+                Selecionar Cidade
+              </button>
+            </Link>
+          </div>
         </div>
       );
     }
@@ -150,70 +163,50 @@ export default function Home() {
             gap: "16px",
           }}
         >
+          <input
+            type="email"
+            placeholder="Digite seu email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            style={{
+              padding: "12px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+              width: "300px",
+              fontSize: "16px",
+            }}
+          />
           <button
-            onClick={() => signIn("google")}
+            onClick={() => signIn("email", { email })}
             style={{
               padding: "12px 24px",
-              backgroundColor: "#4285f4",
+              backgroundColor: "#007bff",
               color: "white",
               border: "none",
-              borderRadius: 4,
+              borderRadius: "4px",
               cursor: "pointer",
               fontSize: "16px",
             }}
           >
-            Entrar com Google
+            Receber link mágico
           </button>
-
-          <div style={{ width: "100%", maxWidth: "300px" }}>
-            <hr style={{ margin: "20px 0" }} />
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                signIn("email", { email });
+          <Link href="/auth/signin">
+            <button
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "16px",
               }}
-              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
             >
-              <label>
-                Entrar por email (magic link):
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
-                  required
-                  style={{
-                    padding: "8px",
-                    border: "1px solid #ccc",
-                    borderRadius: 4,
-                    width: "100%",
-                  }}
-                />
-              </label>
-              <button
-                type="submit"
-                style={{
-                  padding: "8px 16px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 4,
-                  cursor: "pointer",
-                }}
-              >
-                Enviar Link
-              </button>
-            </form>
-          </div>
+              Entrar
+            </button>
+          </Link>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer style={{ textAlign: "center", marginTop: "40px", color: "#666" }}>
-        <p>
-          &copy; 2025 Guarda Memória. Criado para preservar memórias locais.
-        </p>
-      </footer>
     </div>
   );
 }

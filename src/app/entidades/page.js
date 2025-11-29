@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -156,6 +157,9 @@ function EntidadesContent() {
         fontFamily: "Arial, sans-serif",
       }}
     >
+      {/* Header Geral do Site */}
+      <SiteHeader />
+
       {/* Header */}
       <div
         style={{
