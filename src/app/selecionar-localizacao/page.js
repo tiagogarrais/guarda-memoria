@@ -11,6 +11,7 @@ export default function SelecionarLocalizacao() {
   const [estado, setEstado] = useState("");
   const [cidade, setCidade] = useState("");
   const [cidadesDisponiveis, setCidadesDisponiveis] = useState([]);
+  const [cidadesFavoritas, setCidadesFavoritas] = useState([]); // Cidades favoritas do usuário
   const [estadosCidades, setEstadosCidades] = useState({
     states: {},
     cities: [],
@@ -21,6 +22,26 @@ export default function SelecionarLocalizacao() {
       router.push("/");
     }
   }, [session, router]);
+
+  // Buscar cidades favoritas do usuário logado
+  useEffect(() => {
+    const fetchCidadesFavoritas = async () => {
+      if (!session) return;
+
+      try {
+        const res = await fetch("/api/profile");
+        if (res.ok) {
+          const data = await res.json();
+          const favoritas = data.user.cidadesFavoritas || [];
+          setCidadesFavoritas(favoritas);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar cidades favoritas:", error);
+      }
+    };
+
+    fetchCidadesFavoritas();
+  }, [session]);
 
   useEffect(() => {
     const fetchEstadosCidades = async () => {
@@ -78,6 +99,23 @@ export default function SelecionarLocalizacao() {
     }
   };
 
+  // Função para navegar para cidade favorita
+  const handleCidadeFavorita = async (cidade) => {
+    try {
+      const response = await fetch(
+        `/api/cidades?estado=${cidade.stateId}&nome=${encodeURIComponent(cidade.cityName)}`
+      );
+      if (!response.ok) {
+        throw new Error("Erro ao buscar cidade");
+      }
+      const cidadeData = await response.json();
+      router.push(`/memorias/${cidadeData.slug}`);
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("Erro ao acessar cidade favorita. Tente novamente.");
+    }
+  };
+
   if (!session) {
     return <div>Carregando...</div>;
   }
@@ -99,6 +137,54 @@ export default function SelecionarLocalizacao() {
         Escolha o estado e a cidade para ver as pessoas cadastradas e
         contribuir.
       </p>
+
+      {/* Seção de Cidades Favoritas */}
+      {cidadesFavoritas && cidadesFavoritas.length > 0 && (
+        <div
+          style={{
+            marginBottom: "32px",
+            padding: "16px",
+            backgroundColor: "#f8f9fa",
+            borderRadius: 8,
+            border: "1px solid #dee2e6",
+          }}
+        >
+          <h3 style={{ marginTop: 0, color: "#495057" }}>
+            ⭐ Suas Cidades Favoritas
+          </h3>
+          <p style={{ fontSize: "14px", color: "#6c757d", marginBottom: "12px" }}>
+            Acesse rapidamente suas cidades favoritas:
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {cidadesFavoritas.map((cidade, index) => (
+              <button
+                key={index}
+                onClick={() => handleCidadeFavorita(cidade)}
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: "#007bff",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  transition: "background-color 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  e.target.style.backgroundColor = "#0056b3";
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.backgroundColor = "#007bff";
+                }}
+              >
+                📍 {cidade.cityName} - {cidade.stateName}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h3>Ou selecione uma nova localização:</h3>
 
       <form
         onSubmit={handleSubmit}

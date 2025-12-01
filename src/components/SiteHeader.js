@@ -214,27 +214,34 @@ export default function SiteHeader() {
                           style={{
                             width: "100%",
                             padding: "0.75rem 1rem",
-                          background:
-                            cidade.id === currentCity?.id ? "#f0f8ff" : "white",
-                          border: "none",
-                          textAlign: "left",
-                          cursor: "pointer",
-                          borderBottom: "1px solid #eee",
-                          color:
-                            cidade.id === currentCity?.id ? "#007bff" : "black",
-                          transition: "background 0.2s",
-                        }}
-                        onMouseOver={(e) =>
-                          (e.target.style.background = "#f8f9fa")
-                        }
-                        onMouseOut={(e) =>
-                          (e.target.style.background =
-                            cidade.id === currentCity?.id ? "#f0f8ff" : "white")
-                        }
-                      >
-                        📍 {cidade.nome} - {cidade.estado?.toUpperCase()}
-                      </button>
-                    ))) : (
+                            background:
+                              cidade.id === currentCity?.id
+                                ? "#f0f8ff"
+                                : "white",
+                            border: "none",
+                            textAlign: "left",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #eee",
+                            color:
+                              cidade.id === currentCity?.id
+                                ? "#007bff"
+                                : "black",
+                            transition: "background 0.2s",
+                          }}
+                          onMouseOver={(e) =>
+                            (e.target.style.background = "#f8f9fa")
+                          }
+                          onMouseOut={(e) =>
+                            (e.target.style.background =
+                              cidade.id === currentCity?.id
+                                ? "#f0f8ff"
+                                : "white")
+                          }
+                        >
+                          📍 {cidade.nome} - {cidade.estado?.toUpperCase()}
+                        </button>
+                      ))
+                    ) : (
                       <div
                         style={{
                           padding: "1rem",

@@ -22,6 +22,7 @@ export default function Profile() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState([]);
+  const [successMessage, setSuccessMessage] = useState(""); // Mensagem de sucesso
   const [countries, setCountries] = useState([]);
   const [states, setStates] = useState({});
   const [cities, setCities] = useState([]);
@@ -69,29 +70,41 @@ export default function Profile() {
         const res = await fetch("/api/profile");
         if (res.ok) {
           const data = await res.json();
-          // Converter cidades favoritas do formato array para o formato esperado
-          const cidadesFavoritasArray = data.user.cidadesFavoritas
-            ? data.user.cidadesFavoritas
-                .map((cityName) => {
-                  // Tentar encontrar a cidade no array de cidades
-                  const cityData = cities.find(
-                    (city) => city.name === cityName.trim()
-                  );
-                  if (cityData) {
-                    return {
-                      stateId: cityData.state_id,
-                      cityId: cityData.id,
-                      stateName: states[cityData.state_id.toString()],
-                      cityName: cityData.name,
-                    };
+          // Converter cidades favoritas - suportar ambos os formatos (strings antigas e objetos novos)
+          let cidadesFavoritasArray = [];
+
+          if (data.user.cidadesFavoritas) {
+            if (Array.isArray(data.user.cidadesFavoritas)) {
+              // Verificar se são objetos completos (formato novo) ou strings (formato antigo)
+              cidadesFavoritasArray = data.user.cidadesFavoritas
+                .map((item) => {
+                  if (typeof item === "object" && item.cityId && item.stateId) {
+                    // Formato novo - objeto completo
+                    return item;
+                  } else if (typeof item === "string") {
+                    // Formato antigo - string, tentar converter
+                    const cityData = cities.find(
+                      (city) => city.name === item.trim()
+                    );
+                    if (cityData) {
+                      return {
+                        stateId: cityData.state_id,
+                        cityId: cityData.id,
+                        stateName: states[cityData.state_id.toString()],
+                        cityName: cityData.name,
+                      };
+                    }
+                    return null;
+                  } else {
+                    return null;
                   }
-                  return null;
                 })
-                .filter(Boolean)
-            : [];
+                .filter(Boolean);
+            }
+          }
 
           setFormData({
-            fullName: data.user.fullName || session.user.name || "",
+            fullName: data.user.fullName || "", // Não usar nome da autenticação Google
             birthDate: data.user.birthDate || "",
             cpf: data.user.cpf || "",
             whatsapp: data.user.whatsapp || "",
@@ -123,7 +136,7 @@ export default function Profile() {
             : [];
 
           setFormData({
-            fullName: session.user.fullName || session.user.name || "",
+            fullName: "", // Campo vazio para entrada ativa do usuário
             birthDate: session.user.birthDate
               ? new Date(session.user.birthDate).toISOString().split("T")[0]
               : "",
@@ -159,7 +172,7 @@ export default function Profile() {
           : [];
 
         setFormData({
-          fullName: session.user.fullName || session.user.name || "",
+          fullName: "", // Campo vazio para entrada ativa do usuário
           birthDate: session.user.birthDate
             ? new Date(session.user.birthDate).toISOString().split("T")[0]
             : "",
@@ -230,13 +243,12 @@ export default function Profile() {
     e.preventDefault();
     setLoading(true);
     setErrors([]); // Limpar erros anteriores
+    setSuccessMessage(""); // Limpar mensagem de sucesso anterior
 
-    // Preparar dados para envio - converter cidades favoritas para array de strings
+    // Preparar dados para envio - manter objetos completos das cidades favoritas
     const dataToSend = {
       ...formData,
-      cidadesFavoritas: formData.cidadesFavoritas.map(
-        (cidade) => cidade.cityName
-      ),
+      cidadesFavoritas: formData.cidadesFavoritas, // Enviar objetos completos {stateId, cityId, stateName, cityName}
     };
 
     const res = await fetch("/api/profile", {
@@ -247,8 +259,14 @@ export default function Profile() {
 
     if (res.ok) {
       const data = await res.json();
-      // Dados salvos com sucesso - redirecionar para página inicial
-      router.push("/");
+      // Dados salvos com sucesso - mostrar mensagem
+      setSuccessMessage("✅ Perfil salvo com sucesso!");
+      setErrors([]); // Limpar erros anteriores
+
+      // Aguardar um pouco antes de redirecionar para que o usuário veja a mensagem
+      setTimeout(() => {
+        router.push("/");
+      }, 2000); // 2 segundos
     } else {
       try {
         const errorData = await res.json();
@@ -310,6 +328,22 @@ export default function Profile() {
           Este e-mail foi validado durante o login e não pode ser alterado.
         </small>
       </div>
+
+      {/* Mensagem de Sucesso */}
+      {successMessage && (
+        <div
+          style={{
+            backgroundColor: "#d4edda",
+            color: "#155724",
+            padding: 12,
+            borderRadius: 4,
+            border: "1px solid #c3e6cb",
+            marginBottom: 20,
+          }}
+        >
+          {successMessage}
+        </div>
+      )}
 
       {errors.length > 0 && (
         <div
