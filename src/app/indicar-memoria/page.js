@@ -7,7 +7,7 @@ import SiteHeader from "@/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
-function IndicarEntidadeContent() {
+function IndicarMemoriaContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -81,8 +81,8 @@ function IndicarEntidadeContent() {
     setError("");
 
     try {
-      // Primeiro, criar a entidade sem o arquivo
-      const entidadeData = {
+      // Primeiro, criar a memoria sem o arquivo
+      const memoriaData = {
         ...form,
         cidadeId,
         dataNascimento: form.dataNascimento || null,
@@ -106,26 +106,26 @@ function IndicarEntidadeContent() {
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : null,
       };
 
-      const response = await fetch("/api/entidades", {
+      const response = await fetch("/api/memorias", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entidadeData),
+        body: JSON.stringify(memoriaData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Erro ao registrar entidade");
+        throw new Error(errorData.error || "Erro ao registrar memoria");
       }
 
-      const entidade = await response.json();
+      const memoria = await response.json();
 
       // Se houver foto selecionada, fazer upload
       if (selectedFoto) {
         const fotoFormData = new FormData();
         fotoFormData.append("file", selectedFoto);
-        fotoFormData.append("entidadeId", entidade.id);
+        fotoFormData.append("memoriaId", memoria.id);
 
-        const fotoUploadResponse = await fetch("/api/upload-foto-entidade", {
+        const fotoUploadResponse = await fetch("/api/upload-foto-memoria", {
           method: "POST",
           body: fotoFormData,
         });
@@ -143,7 +143,7 @@ function IndicarEntidadeContent() {
       if (form.tipo === "OBRA_ARTE" && selectedFile) {
         const uploadFormData = new FormData();
         uploadFormData.append("file", selectedFile);
-        uploadFormData.append("entidadeId", entidade.id);
+        uploadFormData.append("memoriaId", memoria.id);
 
         const uploadResponse = await fetch("/api/upload-obra-arte", {
           method: "POST",
@@ -163,7 +163,7 @@ function IndicarEntidadeContent() {
         alert("Entidade registrada com sucesso!");
       }
 
-      router.push(`/entidades?cidadeId=${cidadeId}`);
+      router.push(`/memorias?cidadeId=${cidadeId}`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -721,7 +721,7 @@ function IndicarEntidadeContent() {
 export default function IndicarEntidadePage() {
   return (
     <Suspense fallback={<div>Carregando...</div>}>
-      <IndicarEntidadeContent />
+      <IndicarMemoriaContent />
     </Suspense>
   );
 }

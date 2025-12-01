@@ -18,25 +18,25 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
-    const entidadeId = formData.get("entidadeId");
+    const memoriaId = formData.get("memoriaId");
 
-    if (!file || !entidadeId) {
+    if (!file || !memoriaId) {
       return NextResponse.json(
-        { error: "Arquivo e entidadeId são obrigatórios" },
+        { error: "Arquivo e memoriaId são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se a entidade existe
+    // Verificar se a memoria existe
     const prisma = new PrismaClient();
-    const entidade = await prisma.entidade.findUnique({
-      where: { id: entidadeId },
+    const memoria = await prisma.memoria.findUnique({
+      where: { id: memoriaId },
     });
 
-    if (!entidade) {
+    if (!memoria) {
       await prisma.$disconnect();
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
@@ -105,18 +105,18 @@ export async function POST(request) {
         }
       }
 
-      // Criar diretório da entidade se não existir
-      const entidadeDir = entidadeId;
+      // Criar diretório da memoria se não existir
+      const memoriaDir = memoriaId;
       const tipoDir = "fotos";
 
       try {
-        // Criar diretório da entidade
+        // Criar diretório da memoria
         try {
-          await client.send(`MKD ${entidadeDir}`);
+          await client.send(`MKD ${memoriaDir}`);
         } catch (error) {
           // Diretório pode já existir
         }
-        await client.cd(entidadeDir);
+        await client.cd(memoriaDir);
 
         // Criar subdiretório para fotos
         try {
@@ -146,11 +146,11 @@ export async function POST(request) {
       await client.uploadFrom(stream, remotePath);
 
       // Gerar URL pública do arquivo
-      const publicUrl = `https://files.admtiago.com.br/${entidadeId}/${tipoDir}/${fileName}`;
+      const publicUrl = `https://files.admtiago.com.br/${memoriaId}/${tipoDir}/${fileName}`;
 
-      // Atualizar a entidade com a URL da foto
-      await prisma.entidade.update({
-        where: { id: entidadeId },
+      // Atualizar a memoria com a URL da foto
+      await prisma.memoria.update({
+        where: { id: memoriaId },
         data: {
           fotoUrl: publicUrl,
         },

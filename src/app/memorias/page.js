@@ -8,16 +8,17 @@ import SiteHeader from "@/components/SiteHeader";
 
 export const dynamic = "force-dynamic";
 
-function EntidadesContent() {
+function MemoriasContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
   const cidadeId = searchParams.get("cidadeId");
 
-  const [entidades, setEntidades] = useState([]);
+  const [memorias, setMemorias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [cidadeNome, setCidadeNome] = useState("");
+  const [cidadeCarregada, setCidadeCarregada] = useState(false);
 
   const [filtros, setFiltros] = useState({
     search: "",
@@ -39,8 +40,13 @@ function EntidadesContent() {
       return;
     }
     fetchCidade();
-    fetchEntidades();
-  }, [session, cidadeId, router, filtros]);
+  }, [session, cidadeId, router]);
+
+  useEffect(() => {
+    if (cidadeCarregada) {
+      fetchMemorias();
+    }
+  }, [cidadeCarregada, filtros]);
 
   const fetchCidade = async () => {
     try {
@@ -48,12 +54,14 @@ function EntidadesContent() {
       if (!response.ok) throw new Error("Cidade não encontrada");
       const data = await response.json();
       setCidadeNome(data.nome);
+      setCidadeCarregada(true);
     } catch (err) {
-      setError("Cidade não encontrada");
+      // Cidade não encontrada - redirecionar
+      router.push("/selecionar-localizacao");
     }
   };
 
-  const fetchEntidades = async () => {
+  const fetchMemorias = async () => {
     try {
       const params = new URLSearchParams({ cidadeId });
       if (filtros.search) params.append("search", filtros.search);
@@ -63,21 +71,21 @@ function EntidadesContent() {
       if (filtros.dataInicio) params.append("dataInicio", filtros.dataInicio);
       if (filtros.dataFim) params.append("dataFim", filtros.dataFim);
 
-      const response = await fetch(`/api/entidades?${params}`);
-      if (!response.ok) throw new Error("Erro ao buscar entidades");
+      const response = await fetch(`/api/memorias?${params}`);
+      if (!response.ok) throw new Error("Erro ao buscar memorias");
       const data = await response.json();
 
-      // Filtrar entidades com IDs válidos
-      const entidadesValidas = data.filter(
-        (entidade) =>
-          entidade.id &&
-          typeof entidade.id === "string" &&
-          entidade.id.length > 0 &&
-          !entidade.id.includes("<") &&
-          !entidade.id.includes(">")
+      // Filtrar memorias com IDs válidos
+      const memoriasValidas = data.filter(
+        (memoria) =>
+          memoria.id &&
+          typeof memoria.id === "string" &&
+          memoria.id.length > 0 &&
+          !memoria.id.includes("<") &&
+          !memoria.id.includes(">")
       );
 
-      setEntidades(entidadesValidas);
+      setMemorias(memoriasValidas);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -142,11 +150,11 @@ function EntidadesContent() {
     return <div>Carregando...</div>;
   }
 
-  if (loading) return <div>Carregando entidades...</div>;
+  if (loading) return <div>Carregando memorias...</div>;
   if (error) return <div>Erro: {error}</div>;
 
-  const top3 = entidades.slice(0, 3);
-  const resto = entidades.slice(3);
+  const top3 = memorias.slice(0, 3);
+  const resto = memorias.slice(3);
 
   return (
     <div
@@ -172,11 +180,11 @@ function EntidadesContent() {
         <div>
           <h1 style={{ margin: 0, color: "#333" }}>Memórias de {cidadeNome}</h1>
           <p style={{ margin: "4px 0 0 0", color: "#666" }}>
-            {entidades.length} entidade{entidades.length !== 1 ? "s" : ""}{" "}
-            registrada{entidades.length !== 1 ? "s" : ""}
+            {memorias.length} memória{memorias.length !== 1 ? "s" : ""}{" "}
+            registrada{memorias.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Link href={`/indicar-entidade?cidadeId=${cidadeId}`}>
+        <Link href={`/indicar-memoria?cidadeId=${cidadeId}`}>
           <button
             style={{
               padding: "12px 24px",
@@ -381,9 +389,9 @@ function EntidadesContent() {
               margin: "0 auto",
             }}
           >
-            {top3.map((entidade, index) => (
+            {top3.map((memoria, index) => (
               <div
-                key={entidade.id}
+                key={memoria.id}
                 style={{
                   backgroundColor: "white",
                   border: "2px solid #ddd",
@@ -419,10 +427,10 @@ function EntidadesContent() {
                   {index + 1}
                 </div>
 
-                {entidade.fotoUrl && (
+                {memoria.fotoUrl && (
                   <img
-                    src={entidade.fotoUrl}
-                    alt={entidade.nome}
+                    src={memoria.fotoUrl}
+                    alt={memoria.nome}
                     style={{
                       width: "80px",
                       height: "80px",
@@ -436,16 +444,16 @@ function EntidadesContent() {
 
                 <h3 style={{ margin: "8px 0", fontSize: "18px" }}>
                   <span style={{ marginRight: "8px" }}>
-                    {getTipoIcon(entidade.tipo)}
+                    {getTipoIcon(memoria.tipo)}
                   </span>
-                  {entidade.nome}
+                  {memoria.nome}
                 </h3>
 
                 <p style={{ color: "#666", fontSize: "14px", margin: "4px 0" }}>
-                  {getTipoLabel(entidade.tipo)}
+                  {getTipoLabel(memoria.tipo)}
                 </p>
 
-                {entidade.descricao && (
+                {memoria.descricao && (
                   <p
                     style={{
                       color: "#666",
@@ -457,7 +465,7 @@ function EntidadesContent() {
                       overflow: "hidden",
                     }}
                   >
-                    {entidade.descricao}
+                    {memoria.descricao}
                   </p>
                 )}
 
@@ -465,15 +473,15 @@ function EntidadesContent() {
                   style={{ marginTop: "12px", fontSize: "14px", color: "#666" }}
                 >
                   <span style={{ marginRight: "16px" }}>
-                    ❤️ {entidade._count.curtidas}
+                    ❤️ {memoria._count.curtidas}
                   </span>
                   <span style={{ marginRight: "16px" }}>
-                    💬 {entidade._count.comentarios}
+                    💬 {memoria._count.comentarios}
                   </span>
-                  <span>📎 {entidade._count.medias}</span>
+                  <span>📎 {memoria._count.medias}</span>
                 </div>
 
-                <Link href={`/entidade/${entidade.id}`}>
+                <Link href={`/memoria/${memoria.id}`}>
                   <button
                     style={{
                       marginTop: "12px",
@@ -506,9 +514,9 @@ function EntidadesContent() {
               gap: "20px",
             }}
           >
-            {resto.map((entidade) => (
+            {resto.map((memoria) => (
               <div
-                key={entidade.id}
+                key={memoria.id}
                 style={{
                   backgroundColor: "white",
                   border: "1px solid #ddd",
@@ -524,10 +532,10 @@ function EntidadesContent() {
                     marginBottom: "8px",
                   }}
                 >
-                  {entidade.fotoUrl && (
+                  {memoria.fotoUrl && (
                     <img
-                      src={entidade.fotoUrl}
-                      alt={entidade.nome}
+                      src={memoria.fotoUrl}
+                      alt={memoria.nome}
                       style={{
                         width: "40px",
                         height: "40px",
@@ -540,9 +548,9 @@ function EntidadesContent() {
                   <div>
                     <h3 style={{ margin: 0, fontSize: "16px" }}>
                       <span style={{ marginRight: "8px" }}>
-                        {getTipoIcon(entidade.tipo)}
+                        {getTipoIcon(memoria.tipo)}
                       </span>
-                      {entidade.nome}
+                      {memoria.nome}
                     </h3>
                     <p
                       style={{
@@ -551,12 +559,12 @@ function EntidadesContent() {
                         fontSize: "14px",
                       }}
                     >
-                      {getTipoLabel(entidade.tipo)}
+                      {getTipoLabel(memoria.tipo)}
                     </p>
                   </div>
                 </div>
 
-                {entidade.descricao && (
+                {memoria.descricao && (
                   <p
                     style={{
                       color: "#666",
@@ -568,7 +576,7 @@ function EntidadesContent() {
                       overflow: "hidden",
                     }}
                   >
-                    {entidade.descricao}
+                    {memoria.descricao}
                   </p>
                 )}
 
@@ -576,15 +584,15 @@ function EntidadesContent() {
                   style={{ marginTop: "12px", fontSize: "14px", color: "#666" }}
                 >
                   <span style={{ marginRight: "16px" }}>
-                    ❤️ {entidade._count.curtidas}
+                    ❤️ {memoria._count.curtidas}
                   </span>
                   <span style={{ marginRight: "16px" }}>
-                    💬 {entidade._count.comentarios}
+                    💬 {memoria._count.comentarios}
                   </span>
-                  <span>📎 {entidade._count.medias}</span>
+                  <span>📎 {memoria._count.medias}</span>
                 </div>
 
-                <Link href={`/entidade/${entidade.id}`}>
+                <Link href={`/memoria/${memoria.id}`}>
                   <button
                     style={{
                       marginTop: "12px",
@@ -607,15 +615,15 @@ function EntidadesContent() {
         </div>
       )}
 
-      {entidades.length === 0 && !loading && (
+      {memorias.length === 0 && !loading && (
         <div style={{ textAlign: "center", padding: "40px" }}>
           <p style={{ fontSize: "18px", color: "#666" }}>
-            Nenhuma entidade encontrada.
+            Nenhuma memoria encontrada.
           </p>
           <p style={{ color: "#999" }}>
             Seja o primeiro a registrar uma memória desta cidade!
           </p>
-          <Link href={`/indicar-entidade?cidadeId=${cidadeId}`}>
+          <Link href={`/indicar-memoria?cidadeId=${cidadeId}`}>
             <button
               style={{
                 marginTop: "16px",
@@ -637,10 +645,10 @@ function EntidadesContent() {
   );
 }
 
-export default function EntidadesPage() {
+export default function MemoriasPage() {
   return (
     <Suspense fallback={<div>Carregando...</div>}>
-      <EntidadesContent />
+      <MemoriasContent />
     </Suspense>
   );
 }

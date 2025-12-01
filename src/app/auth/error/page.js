@@ -55,13 +55,40 @@ function AuthErrorContent() {
         </p>
 
         {error === "OAuthAccountNotLinked" && (
-          <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f8f9fa", borderRadius: "4px", textAlign: "left" }}>
-            <h3 style={{ margin: "0 0 10px 0", color: "#495057", fontSize: "16px" }}>
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "4px",
+              textAlign: "left",
+            }}
+          >
+            <h3
+              style={{
+                margin: "0 0 10px 0",
+                color: "#495057",
+                fontSize: "16px",
+              }}
+            >
               Como resolver:
             </h3>
-            <ul style={{ margin: 0, paddingLeft: "20px", color: "#6c757d", fontSize: "14px" }}>
-              <li>Se você já tem uma conta criada por email, faça login usando o email primeiro</li>
-              <li>Ou use uma conta Google diferente que não esteja vinculada a outro usuário</li>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: "20px",
+                color: "#6c757d",
+                fontSize: "14px",
+              }}
+            >
+              <li>
+                Se você já tem uma conta criada por email, faça login usando o
+                email primeiro
+              </li>
+              <li>
+                Ou use uma conta Google diferente que não esteja vinculada a
+                outro usuário
+              </li>
               <li>Entre em contato com o suporte se precisar de ajuda</li>
             </ul>
           </div>
@@ -82,7 +109,7 @@ function AuthErrorContent() {
           >
             Tentar Novamente
           </Link>
-          
+
           {error === "OAuthAccountNotLinked" && (
             <Link
               href="/auth/signin?method=email"

@@ -38,13 +38,14 @@ export const authOptions = {
     signIn: "/auth/signin",
     signOut: "/",
     error: "/auth/error",
+    verifyRequest: "/auth/verify-request",
   },
   callbacks: {
     async signIn({ user, account, profile }) {
       try {
-        console.log("SignIn attempt:", { 
-          email: user?.email, 
-          provider: account?.provider 
+        console.log("SignIn attempt:", {
+          email: user?.email,
+          provider: account?.provider,
         });
 
         // Se for Google OAuth, verificar se já existe um usuário com o mesmo email
@@ -54,7 +55,10 @@ export const authOptions = {
           });
 
           if (existingUser) {
-            console.log("Usuário existente encontrado, permitindo vinculação:", existingUser.id);
+            console.log(
+              "Usuário existente encontrado, permitindo vinculação:",
+              existingUser.id
+            );
             // Permite a vinculação da conta Google ao usuário existente
             return true;
           }

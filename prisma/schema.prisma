@@ -7,24 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Modelo baseado no esquema recomendado para NextAuth + Prisma
 model Account {
-  id                 String    @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?   @db.Text
-  access_token       String?   @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?   @db.Text
-  session_state      String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId], map: "Account_userId_fkey")
 }
 
 model Session {
@@ -32,8 +31,9 @@ model Session {
   sessionToken String   @unique
   userId       String
   expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId], map: "Session_userId_fkey")
 }
 
 model User {
@@ -44,32 +44,31 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  profile       Usuario?  // Perfil do usuário (opcional)
+  profile       Usuario?
 }
 
 model Usuario {
-  id                String   @id @default(uuid())
-  userId            String   @unique // Relacionamento 1:1 com User
-  fullName          String?  // Nome completo editável
-  birthDate         DateTime? // Data de nascimento
-  cpf               String?  @unique // CPF único
-  whatsapp          String?  // Número de WhatsApp (opcional)
-  whatsappCountryCode String? @default("55") // Código DDI do país (padrão Brasil)
-  whatsappConsent   Boolean  @default(false) // Consentimento para comunicações
-  bio               String?  @db.Text // Bio do perfil
-  fotoPerfilUrl     String?  // URL da foto de perfil via FTP
-  cidadesFavoritas  String?  @db.Text // JSON array de cidades favoritas
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  entidades   Entidade[]  // Alterado de pessoas para entidades
-  pessoas     Pessoa[]    // Adicionado para compatibilidade
-  comentarios Comentario[]
-  medias      Media[]
-  curtidas    Curtida[]
-  logs        Log[]
-  denuncias   Denuncia[]
+  id                  String       @id @default(uuid())
+  userId              String       @unique
+  fullName            String?
+  birthDate           DateTime?
+  cpf                 String?      @unique
+  whatsapp            String?
+  whatsappCountryCode String?      @default("55")
+  whatsappConsent     Boolean      @default(false)
+  bio                 String?      @db.Text
+  fotoPerfilUrl       String?
+  cidadesFavoritas    String?      @db.Text
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+  comentarios         Comentario[]
+  curtidas            Curtida[]
+  denuncias           Denuncia[]
+  logs                Log[]
+  medias              Media[]
+  memorias            Memoria[]
+  pessoas             Pessoa[]
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -80,177 +79,167 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Enum para tipos de entidade
-enum TipoEntidade {
-  PESSOA
-  LUGAR
-  DATA
-  EVENTO
-  OBRA_ARTE
-  COLETIVO_ORGANIZADO
-}
-
-// Novas tabelas para Guarda Memória
-
 model Cidade {
-  id         String @id @default(uuid())
-  estado     String // Ex.: "SP"
-  nome       String // Ex.: "São Paulo"
-  codigoIbge String? @unique // Opcional, para referência
-
-  entidades Entidade[]
-  pessoas   Pessoa[] // Adicionado para compatibilidade
+  id         String    @id @default(uuid())
+  estado     String
+  nome       String
+  slug       String    @unique
+  codigoIbge String?   @unique
+  memorias   Memoria[]
+  pessoas    Pessoa[]
 
   @@unique([estado, nome])
 }
 
-model Entidade {
-  id             String       @id @default(uuid())
-  tipo           TipoEntidade
-  nome           String
-  descricao      String?      @db.Text // História ou descrição
-  fotoUrl        String?      // URL da foto via FTP
-  cidadeId       String
-  usuarioId      String       // Quem indicou
-  // Campos específicos por tipo
-  dataNascimento DateTime?    // Para pessoas
-  profissao      String?      // Para pessoas
-  categoria      String?      // Para pessoas/lugares/eventos
-  tags           String?      @db.Text // JSON array de tags
-  // Para lugares
-  localizacao    String?      // Endereço ou coordenadas
-  // Para datas/eventos
-  dataRelacionada DateTime?   // Data específica
-  dataInicio     DateTime?    // Para eventos
-  dataFim        DateTime?    // Para eventos
-  // Para obras de arte
-  artista        String?      // Nome do artista
-  anoCriacao     Int?         // Ano de criação
-  tecnica        String?      // Técnica utilizada
-  arquivoUrl     String?      // URL do arquivo da obra via FTP
-  tipoArquivo    String?      // Tipo do arquivo (imagem, audio, video, documento, etc.)
-  tamanhoArquivo Int?         // Tamanho do arquivo em bytes
-  nomeArquivo    String?      // Nome original do arquivo
-  // Para coletivos organizados
-  membrosPrincipais String?   @db.Text // JSON array com nomes dos membros principais
-  dataFormacao   DateTime?    // Data de formação do coletivo
-  tipoColetivo   String?      // Tipo do coletivo (musical, esportivo, cultural, etc.)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  cidade     Cidade       @relation(fields: [cidadeId], references: [id])
-  usuario    Usuario      @relation(fields: [usuarioId], references: [id])
-  comentarios Comentario[]
-  medias     Media[]
-  curtidas   Curtida[]
-  denuncias Denuncia[]   @relation("DenunciaEntidade")
+model Memoria {
+  id                String       @id @default(uuid())
+  tipo              TipoMemoria
+  nome              String
+  descricao         String?      @db.Text
+  fotoUrl           String?
+  cidadeId          String
+  usuarioId         String
+  dataNascimento    DateTime?
+  profissao         String?
+  categoria         String?
+  tags              String?      @db.Text
+  localizacao       String?
+  dataRelacionada   DateTime?
+  dataInicio        DateTime?
+  dataFim           DateTime?
+  artista           String?
+  anoCriacao        Int?
+  tecnica           String?
+  arquivoUrl        String?
+  tipoArquivo       String?
+  tamanhoArquivo    Int?
+  nomeArquivo       String?
+  membrosPrincipais String?      @db.Text
+  dataFormacao      DateTime?
+  tipoColetivo      String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  comentarios       Comentario[]
+  curtidas          Curtida[]
+  denuncias         Denuncia[]   @relation("DenunciaMemoria")
+  medias            Media[]
+  cidade            Cidade       @relation(fields: [cidadeId], references: [id])
+  usuario           Usuario      @relation(fields: [usuarioId], references: [id])
 
   @@index([cidadeId])
   @@index([tipo])
+  @@index([usuarioId], map: "Memoria_usuarioId_fkey")
 }
 
-// Tabela Pessoa mantida para compatibilidade durante migração
 model Pessoa {
-  id             String   @id @default(uuid())
+  id             String       @id @default(uuid())
   nome           String
-  historia       String?  @db.Text
-  fotoUrl        String?  // URL da foto via FTP
+  historia       String?      @db.Text
+  fotoUrl        String?
   cidadeId       String
-  usuarioId      String   // Quem indicou
+  usuarioId      String
   dataNascimento DateTime?
   profissao      String?
-  categoria      String?  // Ex.: "artista", "líder comunitário"
-  tags           String?  @db.Text // JSON array de tags
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  cidade     Cidade      @relation(fields: [cidadeId], references: [id])
-  usuario    Usuario     @relation(fields: [usuarioId], references: [id])
-  comentarios Comentario[]
-  medias     Media[]
-  denuncias Denuncia[] @relation("DenunciaPessoa") // Denúncias sobre a pessoa
+  categoria      String?
+  tags           String?      @db.Text
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  comentarios    Comentario[]
+  denuncias      Denuncia[]   @relation("DenunciaPessoa")
+  medias         Media[]
+  cidade         Cidade       @relation(fields: [cidadeId], references: [id])
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id])
 
   @@index([cidadeId])
+  @@index([usuarioId], map: "Pessoa_usuarioId_fkey")
 }
 
 model Comentario {
-  id        String   @id @default(uuid())
-  pessoaId  String?  // Tornar opcional durante migração
-  entidadeId String? // Novo campo opcional
+  id        String     @id @default(uuid())
+  pessoaId  String?
+  memoriaId String?
   usuarioId String
-  texto     String?  @db.Text // Tornar opcional para comentários apenas com mídia
-  mediaUrl  String?  // URL da mídia anexada (foto, vídeo, áudio, documento)
-  mediaTipo String?  // Tipo da mídia: 'foto', 'video', 'audio', 'documento'
-  createdAt DateTime @default(now())
-
+  texto     String?    @db.Text
+  mediaUrl  String?
+  mediaTipo String?
+  createdAt DateTime   @default(now())
+  memoria   Memoria?   @relation(fields: [memoriaId], references: [id], onDelete: Cascade)
   pessoa    Pessoa?    @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  entidade  Entidade?  @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
   usuario   Usuario    @relation(fields: [usuarioId], references: [id])
-  denuncias Denuncia[] @relation("DenunciaComentario") // Denúncias sobre o comentário
+  denuncias Denuncia[] @relation("DenunciaComentario")
 
   @@index([pessoaId])
-  @@index([entidadeId])
+  @@index([memoriaId])
+  @@index([usuarioId], map: "Comentario_usuarioId_fkey")
 }
 
 model Media {
   id        String   @id @default(uuid())
-  pessoaId  String   // Manter temporariamente para migração
-  entidadeId String? // Novo campo opcional
+  pessoaId  String
+  memoriaId String?
   usuarioId String
-  tipo      String   // "foto", "video", "audio"
-  url       String   // URL via FTP
+  tipo      String
+  url       String
   createdAt DateTime @default(now())
-
-  pessoa   Pessoa?   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  entidade Entidade? @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
-  usuario  Usuario   @relation(fields: [usuarioId], references: [id])
+  memoria   Memoria? @relation(fields: [memoriaId], references: [id], onDelete: Cascade)
+  pessoa    Pessoa   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
 
   @@index([pessoaId])
-  @@index([entidadeId])
+  @@index([memoriaId])
+  @@index([usuarioId], map: "Media_usuarioId_fkey")
 }
 
 model Curtida {
-  entidadeId String
-  usuarioId  String
-  createdAt  DateTime @default(now())
+  memoriaId String
+  usuarioId String
+  createdAt DateTime @default(now())
+  memoria   Memoria  @relation(fields: [memoriaId], references: [id], onDelete: Cascade)
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
 
-  entidade Entidade @relation(fields: [entidadeId], references: [id], onDelete: Cascade)
-  usuario  Usuario  @relation(fields: [usuarioId], references: [id])
-
-  @@unique([entidadeId, usuarioId]) // Uma curtida por usuário/entidade
-  @@index([entidadeId])
+  @@unique([memoriaId, usuarioId])
+  @@index([memoriaId])
+  @@index([usuarioId], map: "Curtida_usuarioId_fkey")
 }
 
 model Log {
   id        String   @id @default(uuid())
   usuarioId String?
-  acao      String   // Ex.: "cadastro_pessoa", "comentario", "curtida"
-  detalhes  String?  @db.Text // JSON com detalhes
+  acao      String
+  detalhes  String?  @db.Text
   timestamp DateTime @default(now())
-
-  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
 
   @@index([usuarioId])
   @@index([timestamp])
 }
 
 model Denuncia {
-  id           String   @id @default(uuid())
-  pessoaId     String?  // Manter temporariamente para migração
-  entidadeId   String?  // Novo campo opcional
+  id           String      @id @default(uuid())
+  pessoaId     String?
+  memoriaId    String?
   comentarioId String?
-  usuarioId    String   // Quem denunciou
-  motivo       String   @db.Text
-  status       String   @default("pendente") // "pendente", "resolvido", "rejeitado"
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  pessoa     Pessoa?     @relation("DenunciaPessoa", fields: [pessoaId], references: [id], map: "DenunciaPessoa_fkey")
-  entidade   Entidade?   @relation("DenunciaEntidade", fields: [entidadeId], references: [id], map: "DenunciaEntidade_fkey")
-  comentario Comentario? @relation("DenunciaComentario", fields: [comentarioId], references: [id], map: "DenunciaComentario_fkey")
-  usuario    Usuario     @relation(fields: [usuarioId], references: [id])
+  usuarioId    String
+  motivo       String      @db.Text
+  status       String      @default("pendente")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  comentario   Comentario? @relation("DenunciaComentario", fields: [comentarioId], references: [id], map: "DenunciaComentario_fkey")
+  memoria      Memoria?    @relation("DenunciaMemoria", fields: [memoriaId], references: [id], map: "DenunciaMemoria_fkey")
+  pessoa       Pessoa?     @relation("DenunciaPessoa", fields: [pessoaId], references: [id], map: "DenunciaPessoa_fkey")
+  usuario      Usuario     @relation(fields: [usuarioId], references: [id])
 
   @@index([pessoaId])
-  @@index([entidadeId])
+  @@index([memoriaId])
   @@index([comentarioId])
+  @@index([usuarioId], map: "Denuncia_usuarioId_fkey")
+}
+
+enum TipoMemoria {
+  PESSOA
+  LUGAR
+  DATA
+  EVENTO
+  OBRA_ARTE
+  COLETIVO_ORGANIZADO
 }

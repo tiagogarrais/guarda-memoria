@@ -18,12 +18,12 @@ if (typeof document !== "undefined") {
   document.head.appendChild(style);
 }
 
-export default function EntidadeDetalhes() {
+export default function MemoriaDetalhes() {
   const { id } = useParams();
   const { data: session } = useSession();
   const router = useRouter();
 
-  const [entidade, setEntidade] = useState(null);
+  const [memoria, setMemoria] = useState(null);
   const [comentarios, setComentarios] = useState([]);
   const [novoComentario, setNovoComentario] = useState("");
   const [loading, setLoading] = useState(true);
@@ -45,12 +45,12 @@ export default function EntidadeDetalhes() {
       return;
     }
     if (id && id.trim()) {
-      fetchEntidade();
+      fetchMemoria();
       fetchComentarios();
       verificarInteracoes();
       fetchMedias();
     } else {
-      setError("ID da entidade inválido");
+      setError("ID da memória inválido");
       setLoading(false);
     }
   }, [session, id, router]);
@@ -67,7 +67,7 @@ export default function EntidadeDetalhes() {
 
       // Verificar se já curtiu
       const curtidaResponse = await fetch(
-        `/api/curtidas?usuarioId=${usuario.id}&entidadeId=${id}`
+        `/api/curtidas?usuarioId=${usuario.id}&memoriaId=${id}`
       );
       if (curtidaResponse.ok) {
         const curtidas = await curtidaResponse.json();
@@ -78,19 +78,19 @@ export default function EntidadeDetalhes() {
     }
   };
 
-  const fetchEntidade = async () => {
+  const fetchMemoria = async () => {
     try {
-      const response = await fetch(`/api/entidades/${id}`);
+      const response = await fetch(`/api/memorias/${id}`);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Entidade não encontrada");
+        throw new Error(errorData.error || "Memória não encontrada");
       }
 
       const data = await response.json();
-      setEntidade(data);
+      setMemoria(data);
     } catch (err) {
-      console.error("Erro ao buscar entidade:", err);
+      console.error("Erro ao buscar memória:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -99,7 +99,7 @@ export default function EntidadeDetalhes() {
 
   const fetchComentarios = async () => {
     try {
-      const response = await fetch(`/api/comentarios?entidadeId=${id}`);
+      const response = await fetch(`/api/comentarios?memoriaId=${id}`);
       if (!response.ok) throw new Error("Erro ao buscar comentários");
       const data = await response.json();
       setComentarios(data);
@@ -110,7 +110,7 @@ export default function EntidadeDetalhes() {
 
   const fetchMedias = async () => {
     try {
-      const response = await fetch(`/api/medias?entidadeId=${id}`);
+      const response = await fetch(`/api/medias?memoriaId=${id}`);
       if (response.ok) {
         const data = await response.json();
         setMedias(data);
@@ -137,7 +137,7 @@ export default function EntidadeDetalhes() {
     setEnviandoComentario(true);
     try {
       let comentarioData = {
-        entidadeId: id,
+        memoriaId: id,
         texto: hasText ? novoComentario.trim() : null,
       };
 
@@ -145,7 +145,7 @@ export default function EntidadeDetalhes() {
       if (comentarioFile) {
         const formData = new FormData();
         formData.append("file", comentarioFile);
-        formData.append("entidadeId", id);
+        formData.append("memoriaId", id);
         formData.append("tipo", comentarioMediaType);
 
         const uploadResponse = await fetch("/api/upload", {
@@ -291,13 +291,13 @@ export default function EntidadeDetalhes() {
       const response = await fetch("/api/curtidas", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entidadeId: id }),
+        body: JSON.stringify({ memoriaId: id }),
       });
 
       if (!response.ok) throw new Error("Erro ao curtir/descurtir");
 
       setJaCurtiu(!jaCurtiu);
-      fetchEntidade(); // Recarregar dados da entidade
+      fetchMemoria(); // Recarregar dados da memoria
     } catch (err) {
       alert("Erro: " + err.message);
     }
@@ -311,7 +311,7 @@ export default function EntidadeDetalhes() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      formData.append("entidadeId", id);
+      formData.append("memoriaId", id);
       formData.append("tipo", uploadType);
 
       const response = await fetch("/api/upload", {
@@ -328,7 +328,7 @@ export default function EntidadeDetalhes() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          entidadeId: id,
+          memoriaId: id,
           tipo: uploadType,
           url: data.url,
         }),
@@ -338,7 +338,7 @@ export default function EntidadeDetalhes() {
 
       setSelectedFile(null);
       fetchMedias(); // Recarregar mídias
-      fetchEntidade(); // Recarregar contadores
+      fetchMemoria(); // Recarregar contadores
     } catch (err) {
       alert("Erro no upload: " + err.message);
     } finally {
@@ -417,9 +417,9 @@ export default function EntidadeDetalhes() {
     return estados[codigoEstado] || codigoEstado;
   };
   if (!session) return <div>Carregando...</div>;
-  if (loading) return <div>Carregando entidade...</div>;
+  if (loading) return <div>Carregando memoria...</div>;
   if (error) return <div>Erro: {error}</div>;
-  if (!entidade) return <div>Entidade não encontrada</div>;
+  if (!memoria) return <div>Memória não encontrada</div>;
 
   return (
     <div
@@ -433,7 +433,7 @@ export default function EntidadeDetalhes() {
       {/* Header Geral do Site */}
       <SiteHeader />
 
-      {/* Header da Entidade */}
+      {/* Header da Memória */}
       <div
         style={{
           backgroundColor: "white",
@@ -451,10 +451,10 @@ export default function EntidadeDetalhes() {
             marginBottom: "16px",
           }}
         >
-          {entidade.fotoUrl && (
+          {memoria.fotoUrl && (
             <img
-              src={entidade.fotoUrl}
-              alt={entidade.nome}
+              src={memoria.fotoUrl}
+              alt={memoria.nome}
               style={{
                 width: "80px",
                 height: "80px",
@@ -464,7 +464,7 @@ export default function EntidadeDetalhes() {
                 cursor: "pointer",
               }}
               onClick={() => {
-                setModalImage(entidade.fotoUrl);
+                setModalImage(memoria.fotoUrl);
                 setShowModal(true);
               }}
             />
@@ -472,100 +472,100 @@ export default function EntidadeDetalhes() {
           <div>
             <h1 style={{ margin: 0, fontSize: "28px" }}>
               <span style={{ marginRight: "12px" }}>
-                {getTipoIcon(entidade.tipo)}
+                {getTipoIcon(memoria.tipo)}
               </span>
-              {entidade.nome}
+              {memoria.nome}
             </h1>
             <p style={{ margin: "4px 0", color: "#666" }}>
-              {getTipoLabel(entidade.tipo)} • {entidade.cidade.nome},{" "}
-              {getEstadoNome(entidade.cidade.estado)}
+              {getTipoLabel(memoria.tipo)} • {memoria.cidade.nome},{" "}
+              {getEstadoNome(memoria.cidade.estado)}
             </p>
             <p style={{ margin: "4px 0", color: "#666", fontSize: "14px" }}>
-              Registrado por {entidade.usuario.fullName}
+              Registrado por {memoria.usuario.fullName}
             </p>
           </div>
         </div>
 
         {/* Informações específicas por tipo */}
         <div style={{ marginBottom: "16px" }}>
-          {entidade.tipo === "PESSOA" && entidade.dataNascimento && (
+          {memoria.tipo === "PESSOA" && memoria.dataNascimento && (
             <p>
               <strong>Data de nascimento:</strong>{" "}
-              {new Date(entidade.dataNascimento).toLocaleDateString("pt-BR")}
+              {new Date(memoria.dataNascimento).toLocaleDateString("pt-BR")}
             </p>
           )}
-          {entidade.tipo === "PESSOA" && entidade.profissao && (
+          {memoria.tipo === "PESSOA" && memoria.profissao && (
             <p>
-              <strong>Profissão:</strong> {entidade.profissao}
+              <strong>Profissão:</strong> {memoria.profissao}
             </p>
           )}
-          {entidade.tipo === "LUGAR" && entidade.localizacao && (
+          {memoria.tipo === "LUGAR" && memoria.localizacao && (
             <p>
-              <strong>Localização:</strong> {entidade.localizacao}
+              <strong>Localização:</strong> {memoria.localizacao}
             </p>
           )}
-          {entidade.tipo === "DATA" && entidade.dataRelacionada && (
+          {memoria.tipo === "DATA" && memoria.dataRelacionada && (
             <p>
               <strong>Data:</strong>{" "}
-              {new Date(entidade.dataRelacionada).toLocaleDateString("pt-BR")}
+              {new Date(memoria.dataRelacionada).toLocaleDateString("pt-BR")}
             </p>
           )}
-          {entidade.tipo === "EVENTO" && entidade.dataInicio && (
+          {memoria.tipo === "EVENTO" && memoria.dataInicio && (
             <p>
               <strong>Data de início:</strong>{" "}
-              {new Date(entidade.dataInicio).toLocaleDateString("pt-BR")}
+              {new Date(memoria.dataInicio).toLocaleDateString("pt-BR")}
             </p>
           )}
-          {entidade.tipo === "EVENTO" && entidade.dataFim && (
+          {memoria.tipo === "EVENTO" && memoria.dataFim && (
             <p>
               <strong>Data de fim:</strong>{" "}
-              {new Date(entidade.dataFim).toLocaleDateString("pt-BR")}
+              {new Date(memoria.dataFim).toLocaleDateString("pt-BR")}
             </p>
           )}
-          {entidade.tipo === "OBRA_ARTE" && entidade.artista && (
+          {memoria.tipo === "OBRA_ARTE" && memoria.artista && (
             <p>
-              <strong>Artista:</strong> {entidade.artista}
+              <strong>Artista:</strong> {memoria.artista}
             </p>
           )}
-          {entidade.tipo === "OBRA_ARTE" && entidade.anoCriacao && (
+          {memoria.tipo === "OBRA_ARTE" && memoria.anoCriacao && (
             <p>
-              <strong>Ano de criação:</strong> {entidade.anoCriacao}
+              <strong>Ano de criação:</strong> {memoria.anoCriacao}
             </p>
           )}
-          {entidade.tipo === "OBRA_ARTE" && entidade.tecnica && (
+          {memoria.tipo === "OBRA_ARTE" && memoria.tecnica && (
             <p>
-              <strong>Técnica:</strong> {entidade.tecnica}
+              <strong>Técnica:</strong> {memoria.tecnica}
             </p>
           )}
-          {entidade.tipo === "COLETIVO_ORGANIZADO" &&
-            entidade.membrosPrincipais && (
+          {memoria.tipo === "COLETIVO_ORGANIZADO" &&
+            memoria.membrosPrincipais && (
               <p>
                 <strong>Membros principais:</strong>{" "}
-                {JSON.parse(entidade.membrosPrincipais).join(", ")}
+                {JSON.parse(memoria.membrosPrincipais).join(", ")}
               </p>
             )}
-          {entidade.tipo === "COLETIVO_ORGANIZADO" && entidade.dataFormacao && (
+          {memoria.tipo === "COLETIVO_ORGANIZADO" && memoria.dataFormacao && (
             <p>
               <strong>Data de formação:</strong>{" "}
-              {new Date(entidade.dataFormacao).toLocaleDateString("pt-BR")}
+              {new Date(memoria.dataFormacao).toLocaleDateString("pt-BR")}
             </p>
           )}
-          {entidade.tipo === "COLETIVO_ORGANIZADO" && entidade.tipoColetivo && (
+          {memoria.tipo === "COLETIVO_ORGANIZADO" && memoria.tipoColetivo && (
             <p>
-              <strong>Tipo de coletivo:</strong> {entidade.tipoColetivo}
+              <strong>Tipo de coletivo:</strong> {memoria.tipoColetivo}
             </p>
           )}
-          {entidade.categoria && (
+          {memoria.categoria && (
             <p>
-              <strong>Categoria:</strong> {entidade.categoria}
+              <strong>Categoria:</strong> {memoria.categoria}
             </p>
           )}
         </div>
 
-        {entidade.descricao && (
+        {memoria.descricao && (
           <div style={{ marginBottom: "16px" }}>
             <h3>História</h3>
-            <p style={{ lineHeight: 1.6 }}>{entidade.descricao}</p>
+            <p style={{ lineHeight: 1.6 }}>{memoria.descricao}</p>
           </div>
         )}
 
@@ -579,12 +579,12 @@ export default function EntidadeDetalhes() {
         >
           <div style={{ fontSize: "18px" }}>
             <span style={{ marginRight: "20px" }}>
-              ❤️ {entidade._count.curtidas}
+              ❤️ {memoria._count.curtidas}
             </span>
             <span style={{ marginRight: "20px" }}>
-              💬 {entidade._count.comentarios}
+              💬 {memoria._count.comentarios}
             </span>
-            <span>📎 {entidade._count.medias}</span>
+            <span>📎 {memoria._count.medias}</span>
           </div>
 
           <div>
@@ -670,7 +670,7 @@ export default function EntidadeDetalhes() {
       )}
 
       {/* Arquivo da Obra de Arte */}
-      {entidade.tipo === "OBRA_ARTE" && entidade.arquivoUrl && (
+      {memoria.tipo === "OBRA_ARTE" && memoria.arquivoUrl && (
         <div style={{ marginBottom: "24px" }}>
           <h2>Obra de Arte</h2>
           <div
@@ -681,11 +681,11 @@ export default function EntidadeDetalhes() {
               padding: "16px",
             }}
           >
-            {entidade.tipoArquivo === "imagem" && (
+            {memoria.tipoArquivo === "imagem" && (
               <div>
                 <img
-                  src={entidade.arquivoUrl}
-                  alt={entidade.nome}
+                  src={memoria.arquivoUrl}
+                  alt={memoria.nome}
                   style={{
                     maxWidth: "100%",
                     maxHeight: "400px",
@@ -694,38 +694,38 @@ export default function EntidadeDetalhes() {
                 />
               </div>
             )}
-            {entidade.tipoArquivo === "audio" && (
+            {memoria.tipoArquivo === "audio" && (
               <div>
                 <audio
-                  src={entidade.arquivoUrl}
+                  src={memoria.arquivoUrl}
                   controls
                   style={{ width: "100%" }}
                 />
               </div>
             )}
-            {entidade.tipoArquivo === "video" && (
+            {memoria.tipoArquivo === "video" && (
               <div>
                 <video
-                  src={entidade.arquivoUrl}
+                  src={memoria.arquivoUrl}
                   controls
                   style={{ maxWidth: "100%", maxHeight: "400px" }}
                 />
               </div>
             )}
-            {(entidade.tipoArquivo === "documento" ||
-              !["imagem", "audio", "video"].includes(entidade.tipoArquivo)) && (
+            {(memoria.tipoArquivo === "documento" ||
+              !["imagem", "audio", "video"].includes(memoria.tipoArquivo)) && (
               <div style={{ textAlign: "center", padding: "40px" }}>
                 <p style={{ marginBottom: "16px" }}>
-                  📄 {entidade.nomeArquivo || "Documento"}
-                  {entidade.tamanhoArquivo && (
+                  📄 {memoria.nomeArquivo || "Documento"}
+                  {memoria.tamanhoArquivo && (
                     <span style={{ color: "#666", fontSize: "14px" }}>
                       {" "}
-                      ({(entidade.tamanhoArquivo / 1024 / 1024).toFixed(2)} MB)
+                      ({(memoria.tamanhoArquivo / 1024 / 1024).toFixed(2)} MB)
                     </span>
                   )}
                 </p>
                 <a
-                  href={entidade.arquivoUrl}
+                  href={memoria.arquivoUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{

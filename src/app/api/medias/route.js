@@ -3,22 +3,22 @@ import prisma from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/medias?entidadeId=...
+// GET /api/medias?memoriaId=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const entidadeId = searchParams.get("entidadeId");
+    const memoriaId = searchParams.get("memoriaId");
 
-    if (!entidadeId) {
+    if (!memoriaId) {
       return NextResponse.json(
-        { error: "entidadeId é obrigatório" },
+        { error: "memoriaId é obrigatório" },
         { status: 400 }
       );
     }
 
     const medias = await prisma.media.findMany({
       where: {
-        entidadeId,
+        memoriaId,
       },
       orderBy: {
         createdAt: "desc",

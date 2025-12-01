@@ -5,21 +5,21 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/comentarios?entidadeId=...
+// GET /api/comentarios?memoriaId=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const entidadeId = searchParams.get("entidadeId");
+    const memoriaId = searchParams.get("memoriaId");
 
-    if (!entidadeId) {
+    if (!memoriaId) {
       return NextResponse.json(
-        { error: "entidadeId é obrigatório" },
+        { error: "memoriaId é obrigatório" },
         { status: 400 }
       );
     }
 
     const comentarios = await prisma.comentario.findMany({
-      where: { entidadeId },
+      where: { memoriaId },
       include: {
         usuario: { select: { fullName: true, fotoPerfilUrl: true } },
       },
@@ -42,22 +42,22 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { entidadeId, texto, mediaUrl, mediaTipo } = body;
+    const { memoriaId, texto, mediaUrl, mediaTipo } = body;
 
-    if (!entidadeId || (!texto && !mediaUrl)) {
+    if (!memoriaId || (!texto && !mediaUrl)) {
       return NextResponse.json(
-        { error: "entidadeId e pelo menos texto ou mediaUrl são obrigatórios" },
+        { error: "memoriaId e pelo menos texto ou mediaUrl são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se entidade existe
-    const entidade = await prisma.entidade.findUnique({
-      where: { id: entidadeId },
+    // Verificar se memoria existe
+    const memoria = await prisma.memoria.findUnique({
+      where: { id: memoriaId },
     });
-    if (!entidade) {
+    if (!memoria) {
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
@@ -75,7 +75,7 @@ export async function POST(request) {
 
     const comentario = await prisma.comentario.create({
       data: {
-        entidadeId,
+        memoriaId,
         usuarioId: usuario.id,
         texto: texto || null,
         mediaUrl: mediaUrl || null,
@@ -91,7 +91,7 @@ export async function POST(request) {
       data: {
         usuarioId: usuario.id,
         acao: "comentario",
-        detalhes: JSON.stringify({ comentarioId: comentario.id, entidadeId }),
+        detalhes: JSON.stringify({ comentarioId: comentario.id, memoriaId }),
       },
     });
 

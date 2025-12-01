@@ -18,33 +18,33 @@ export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
-    const entidadeId = formData.get("entidadeId");
+    const memoriaId = formData.get("memoriaId");
 
-    if (!file || !entidadeId) {
+    if (!file || !memoriaId) {
       return NextResponse.json(
-        { error: "Arquivo e entidadeId são obrigatórios" },
+        { error: "Arquivo e memoriaId são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se a entidade existe e é uma obra de arte
+    // Verificar se a memoria existe e é uma obra de arte
     const prisma = new PrismaClient();
-    const entidade = await prisma.entidade.findUnique({
-      where: { id: entidadeId },
+    const memoria = await prisma.memoria.findUnique({
+      where: { id: memoriaId },
     });
 
-    if (!entidade) {
+    if (!memoria) {
       await prisma.$disconnect();
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
 
-    if (entidade.tipo !== "OBRA_ARTE") {
+    if (memoria.tipo !== "OBRA_ARTE") {
       await prisma.$disconnect();
       return NextResponse.json(
-        { error: "Esta entidade não é uma obra de arte" },
+        { error: "Esta memória não é uma obra de arte" },
         { status: 400 }
       );
     }
@@ -123,18 +123,18 @@ export async function POST(request) {
         }
       }
 
-      // Criar diretório da entidade se não existir
-      const entidadeDir = entidadeId;
+      // Criar diretório da memoria se não existir
+      const memoriaDir = memoriaId;
       const tipoDir = "obras-arte";
 
       try {
-        // Criar diretório da entidade
+        // Criar diretório da memoria
         try {
-          await client.send(`MKD ${entidadeDir}`);
+          await client.send(`MKD ${memoriaDir}`);
         } catch (error) {
           // Diretório pode já existir
         }
-        await client.cd(entidadeDir);
+        await client.cd(memoriaDir);
 
         // Criar subdiretório para obras de arte
         try {
@@ -163,11 +163,11 @@ export async function POST(request) {
       await client.uploadFrom(stream, remotePath);
 
       // Gerar URL pública do arquivo
-      const publicUrl = `https://files.admtiago.com.br/${entidadeId}/${tipoDir}/${fileName}`;
+      const publicUrl = `https://files.admtiago.com.br/${memoriaId}/${tipoDir}/${fileName}`;
 
-      // Atualizar a entidade com as informações do arquivo
-      await prisma.entidade.update({
-        where: { id: entidadeId },
+      // Atualizar a memoria com as informações do arquivo
+      await prisma.memoria.update({
+        where: { id: memoriaId },
         data: {
           arquivoUrl: publicUrl,
           tipoArquivo,

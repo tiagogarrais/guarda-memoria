@@ -18,7 +18,7 @@ export async function GET(request) {
 
     const denuncias = await prisma.denuncia.findMany({
       include: {
-        entidade: { select: { id: true, nome: true, tipo: true } },
+        memoria: { select: { id: true, nome: true, tipo: true } },
         usuario: { select: { id: true, name: true, email: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -42,22 +42,22 @@ export async function POST(request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { entidadeId, motivo, descricao } = await request.json();
+    const { memoriaId, motivo, descricao } = await request.json();
 
-    if (!entidadeId || !motivo) {
+    if (!memoriaId || !motivo) {
       return NextResponse.json(
-        { error: "entidadeId e motivo são obrigatórios" },
+        { error: "memoriaId e motivo são obrigatórios" },
         { status: 400 }
       );
     }
 
-    // Verificar se a entidade existe
-    const entidade = await prisma.entidade.findUnique({
-      where: { id: entidadeId },
+    // Verificar se a memoria existe
+    const memoria = await prisma.memoria.findUnique({
+      where: { id: memoriaId },
     });
-    if (!entidade) {
+    if (!memoria) {
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
@@ -65,7 +65,7 @@ export async function POST(request) {
     // Criar denúncia
     const denuncia = await prisma.denuncia.create({
       data: {
-        entidadeId,
+        memoriaId,
         usuarioId: session.user.id,
         motivo,
         descricao: descricao || "",

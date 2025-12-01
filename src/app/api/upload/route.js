@@ -19,17 +19,17 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const pessoaId = formData.get("pessoaId");
-    const entidadeId = formData.get("entidadeId");
+    const memoriaId = formData.get("memoriaId");
     const tipo = formData.get("tipo");
 
-    // Aceitar pessoaId OU entidadeId
-    const recursoId = pessoaId || entidadeId;
+    // Aceitar pessoaId OU memoriaId
+    const recursoId = pessoaId || memoriaId;
 
     if (!file || !recursoId || !tipo) {
       return NextResponse.json(
         {
           error:
-            "Arquivo, recursoId (pessoaId ou entidadeId) e tipo são obrigatórios",
+            "Arquivo, recursoId (pessoaId ou memoriaId) e tipo são obrigatórios",
         },
         { status: 400 }
       );

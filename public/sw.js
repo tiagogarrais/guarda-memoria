@@ -8,10 +8,7 @@ const urlsToCache = [
 ];
 
 // Recursos estáticos para cache
-const staticAssets = [
-  "/_next/static/",
-  "/_next/image",
-];
+const staticAssets = ["/_next/static/", "/_next/image"];
 
 self.addEventListener("install", (event) => {
   console.log("Service Worker installing.");
@@ -43,20 +40,25 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   // Estratégia Cache First para recursos estáticos
-  if (event.request.url.includes("_next/static/") ||
-      event.request.url.includes("_next/image")) {
+  if (
+    event.request.url.includes("_next/static/") ||
+    event.request.url.includes("_next/image")
+  ) {
     event.respondWith(
       caches.match(event.request).then((response) => {
-        return response || fetch(event.request).then((response) => {
-          // Cache recursos estáticos quando baixados
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        });
+        return (
+          response ||
+          fetch(event.request).then((response) => {
+            // Cache recursos estáticos quando baixados
+            if (response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseClone);
+              });
+            }
+            return response;
+          })
+        );
       })
     );
   }
@@ -92,16 +94,12 @@ self.addEventListener("push", (event) => {
         primaryKey: 1,
       },
     };
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
+    event.waitUntil(self.registration.showNotification(data.title, options));
   }
 });
 
 self.addEventListener("notificationclick", (event) => {
   console.log("Notification click received.");
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow("/")
-  );
+  event.waitUntil(clients.openWindow("/"));
 });

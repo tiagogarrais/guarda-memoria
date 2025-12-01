@@ -36,8 +36,8 @@ function PessoasContent() {
       router.push("/selecionar-localizacao");
       return;
     }
-    // Redirecionar para a nova página de entidades
-    router.replace(`/entidades?cidadeId=${cidadeId}`);
+    // Redirecionar para a nova página de memorias
+    router.replace(`/memorias?cidadeId=${cidadeId}`);
   }, [session, cidadeId, router]);
 
   const fetchCidade = async () => {
@@ -105,7 +105,6 @@ function PessoasContent() {
       <div style={{ marginBottom: "20px" }}>
         <button
           onClick={() => {
-            localStorage.removeItem("cidadeSelecionada");
             router.push("/selecionar-localizacao");
           }}
           style={{

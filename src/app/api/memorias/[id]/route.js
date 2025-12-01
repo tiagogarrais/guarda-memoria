@@ -5,12 +5,12 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/entidades/[id]
+// GET /api/memorias/[id]
 export async function GET(request, { params }) {
   try {
     const { id } = params;
 
-    const entidade = await prisma.entidade.findUnique({
+    const memoria = await prisma.memoria.findUnique({
       where: { id },
       include: {
         usuario: { select: { fullName: true } },
@@ -42,21 +42,21 @@ export async function GET(request, { params }) {
       },
     });
 
-    if (!entidade) {
+    if (!memoria) {
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(entidade);
+    return NextResponse.json(memoria);
   } catch (error) {
-    console.error("Erro ao buscar entidade:", error);
+    console.error("Erro ao buscar memoria:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
 
-// PUT /api/entidades/[id]
+// PUT /api/memorias/[id]
 export async function PUT(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
@@ -67,23 +67,23 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const body = await request.json();
 
-    // Verificar se a entidade existe e pertence ao usuário
-    const entidadeExistente = await prisma.entidade.findUnique({
+    // Verificar se a memoria existe e pertence ao usuário
+    const memoriaExistente = await prisma.memoria.findUnique({
       where: { id },
       include: { usuario: true },
     });
 
-    if (!entidadeExistente) {
+    if (!memoriaExistente) {
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
 
-    // Verificar se o usuário é o dono da entidade
-    if (entidadeExistente.usuario.userId !== session.user.id) {
+    // Verificar se o usuário é o dono da memoria
+    if (memoriaExistente.usuario.userId !== session.user.id) {
       return NextResponse.json(
-        { error: "Você não tem permissão para editar esta entidade" },
+        { error: "Você não tem permissão para editar esta memória" },
         { status: 403 }
       );
     }
@@ -113,7 +113,7 @@ export async function PUT(request, { params }) {
       tipoColetivo,
     } = body;
 
-    const entidadeAtualizada = await prisma.entidade.update({
+    const memoriaAtualizada = await prisma.memoria.update({
       where: { id },
       data: {
         nome,
@@ -140,14 +140,14 @@ export async function PUT(request, { params }) {
       },
     });
 
-    return NextResponse.json(entidadeAtualizada);
+    return NextResponse.json(memoriaAtualizada);
   } catch (error) {
-    console.error("Erro ao atualizar entidade:", error);
+    console.error("Erro ao atualizar memória:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
 
-// DELETE /api/entidades/[id]
+// DELETE /api/memorias/[id]
 export async function DELETE(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
@@ -157,35 +157,35 @@ export async function DELETE(request, { params }) {
 
     const { id } = params;
 
-    // Verificar se a entidade existe e pertence ao usuário
-    const entidade = await prisma.entidade.findUnique({
+    // Verificar se a memoria existe e pertence ao usuário
+    const memoria = await prisma.memoria.findUnique({
       where: { id },
       include: { usuario: true },
     });
 
-    if (!entidade) {
+    if (!memoria) {
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
 
-    // Verificar se o usuário é o dono da entidade
-    if (entidade.usuario.userId !== session.user.id) {
+    // Verificar se o usuário é o dono da memoria
+    if (memoria.usuario.userId !== session.user.id) {
       return NextResponse.json(
-        { error: "Você não tem permissão para excluir esta entidade" },
+        { error: "Você não tem permissão para excluir esta memória" },
         { status: 403 }
       );
     }
 
-    // Excluir entidade (as relações serão excluídas automaticamente devido ao onDelete: Cascade)
-    await prisma.entidade.delete({
+    // Excluir memoria (as relações serão excluídas automaticamente devido ao onDelete: Cascade)
+    await prisma.memoria.delete({
       where: { id },
     });
 
-    return NextResponse.json({ message: "Entidade excluída com sucesso" });
+    return NextResponse.json({ message: "Memória excluída com sucesso" });
   } catch (error) {
-    console.error("Erro ao excluir entidade:", error);
+    console.error("Erro ao excluir memória:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }

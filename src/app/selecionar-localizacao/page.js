@@ -67,18 +67,11 @@ export default function SelecionarLocalizacao() {
       }
       const cidadeData = await response.json();
 
-      // Salvar cidade selecionada no localStorage
-      localStorage.setItem(
-        "cidadeSelecionada",
-        JSON.stringify({
-          id: cidadeData.id,
-          nome: cidadeData.nome,
-          estado: cidadeData.estado,
-        })
-      );
+      // Não precisamos mais salvar no localStorage
+      // O Context agora gerencia o estado baseado na URL
 
-      // Redirecionar para /entidades?cidadeId=...
-      router.push(`/entidades?cidadeId=${cidadeData.id}`);
+      // Redirecionar diretamente para /memorias/slug
+      router.push(`/memorias/${cidadeData.slug}`);
     } catch (error) {
       console.error("Erro:", error);
       alert("Erro ao selecionar localização. Tente novamente.");

@@ -5,16 +5,16 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/curtidas?usuarioId=...&entidadeId=...
+// GET /api/curtidas?usuarioId=...&memoriaId=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const usuarioId = searchParams.get("usuarioId");
-    const entidadeId = searchParams.get("entidadeId");
+    const memoriaId = searchParams.get("memoriaId");
 
-    if (!usuarioId || !entidadeId) {
+    if (!usuarioId || !memoriaId) {
       return NextResponse.json(
-        { error: "usuarioId e entidadeId são obrigatórios" },
+        { error: "usuarioId e memoriaId são obrigatórios" },
         { status: 400 }
       );
     }
@@ -22,7 +22,7 @@ export async function GET(request) {
     const curtidas = await prisma.curtida.findMany({
       where: {
         usuarioId,
-        entidadeId,
+        memoriaId,
       },
     });
 
@@ -42,22 +42,22 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { entidadeId } = body;
+    const { memoriaId } = body;
 
-    if (!entidadeId) {
+    if (!memoriaId) {
       return NextResponse.json(
-        { error: "entidadeId é obrigatório" },
+        { error: "memoriaId é obrigatório" },
         { status: 400 }
       );
     }
 
-    // Verificar se entidade existe
-    const entidade = await prisma.entidade.findUnique({
-      where: { id: entidadeId },
+    // Verificar se memoria existe
+    const memoria = await prisma.memoria.findUnique({
+      where: { id: memoriaId },
     });
-    if (!entidade) {
+    if (!memoria) {
       return NextResponse.json(
-        { error: "Entidade não encontrada" },
+        { error: "Memória não encontrada" },
         { status: 404 }
       );
     }
@@ -76,8 +76,8 @@ export async function POST(request) {
     // Verificar se já curtiu
     const existingCurtida = await prisma.curtida.findUnique({
       where: {
-        entidadeId_usuarioId: {
-          entidadeId,
+        memoriaId_usuarioId: {
+          memoriaId,
           usuarioId: usuario.id,
         },
       },
@@ -85,14 +85,14 @@ export async function POST(request) {
 
     if (existingCurtida) {
       return NextResponse.json(
-        { error: "Você já curtiu esta entidade" },
+        { error: "Você já curtiu esta memória" },
         { status: 409 }
       );
     }
 
     const curtida = await prisma.curtida.create({
       data: {
-        entidadeId,
+        memoriaId,
         usuarioId: usuario.id,
       },
     });
@@ -102,7 +102,7 @@ export async function POST(request) {
       data: {
         usuarioId: usuario.id,
         acao: "curtida",
-        detalhes: JSON.stringify({ curtidaId: curtida.id, entidadeId }),
+        detalhes: JSON.stringify({ curtidaId: curtida.id, memoriaId }),
       },
     });
 
@@ -125,11 +125,11 @@ export async function DELETE(request) {
     }
 
     const body = await request.json();
-    const { entidadeId } = body;
+    const { memoriaId } = body;
 
-    if (!entidadeId) {
+    if (!memoriaId) {
       return NextResponse.json(
-        { error: "entidadeId é obrigatório" },
+        { error: "memoriaId é obrigatório" },
         { status: 400 }
       );
     }
@@ -148,8 +148,8 @@ export async function DELETE(request) {
     // Verificar se a curtida existe
     const existingCurtida = await prisma.curtida.findUnique({
       where: {
-        entidadeId_usuarioId: {
-          entidadeId,
+        memoriaId_usuarioId: {
+          memoriaId,
           usuarioId: usuario.id,
         },
       },
@@ -165,8 +165,8 @@ export async function DELETE(request) {
     // Remover a curtida
     await prisma.curtida.delete({
       where: {
-        entidadeId_usuarioId: {
-          entidadeId,
+        memoriaId_usuarioId: {
+          memoriaId,
           usuarioId: usuario.id,
         },
       },
@@ -177,7 +177,7 @@ export async function DELETE(request) {
       data: {
         usuarioId: usuario.id,
         acao: "descurtida",
-        detalhes: JSON.stringify({ entidadeId }),
+        detalhes: JSON.stringify({ memoriaId }),
       },
     });
 

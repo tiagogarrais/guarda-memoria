@@ -5,11 +5,12 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-// GET /api/entidades?cidadeId=...&tipo=...&search=...&categoria=...&profissao=...&dataInicio=...&dataFim=...&artista=...&anoCriacao=...&tipoArquivo=...&tipoColetivo=...
+// GET /api/memorias?cidadeId=...&slug=...&tipo=...&search=...&categoria=...&profissao=...&dataInicio=...&dataFim=...&artista=...&anoCriacao=...&tipoArquivo=...&tipoColetivo=...
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const cidadeId = searchParams.get("cidadeId");
+    let cidadeId = searchParams.get("cidadeId");
+    const slug = searchParams.get("slug");
     const tipo = searchParams.get("tipo"); // PESSOA, LUGAR, DATA, EVENTO, OBRA_ARTE, COLETIVO_ORGANIZADO
     const search = searchParams.get("search");
     const categoria = searchParams.get("categoria");
@@ -21,9 +22,25 @@ export async function GET(request) {
     const tipoArquivo = searchParams.get("tipoArquivo");
     const tipoColetivo = searchParams.get("tipoColetivo");
 
+    // Se foi passado um slug, buscar a cidade pelo slug
+    if (slug && !cidadeId) {
+      const cidade = await prisma.cidade.findUnique({
+        where: { slug },
+      });
+
+      if (!cidade) {
+        return NextResponse.json(
+          { error: "Cidade não encontrada" },
+          { status: 404 }
+        );
+      }
+
+      cidadeId = cidade.id;
+    }
+
     if (!cidadeId) {
       return NextResponse.json(
-        { error: "cidadeId é obrigatório" },
+        { error: "cidadeId ou slug é obrigatório" },
         { status: 400 }
       );
     }
@@ -37,13 +54,13 @@ export async function GET(request) {
 
     if (search) {
       where.OR = [
-        { nome: { contains: search, mode: "insensitive" } },
-        { descricao: { contains: search, mode: "insensitive" } },
-        { categoria: { contains: search, mode: "insensitive" } },
-        { profissao: { contains: search, mode: "insensitive" } },
-        { artista: { contains: search, mode: "insensitive" } },
-        { tecnica: { contains: search, mode: "insensitive" } },
-        { tipoColetivo: { contains: search, mode: "insensitive" } },
+        { nome: { contains: search } },
+        { descricao: { contains: search } },
+        { categoria: { contains: search } },
+        { profissao: { contains: search } },
+        { artista: { contains: search } },
+        { tecnica: { contains: search } },
+        { tipoColetivo: { contains: search } },
       ];
     }
 
@@ -52,11 +69,11 @@ export async function GET(request) {
     }
 
     if (profissao) {
-      where.profissao = { contains: profissao, mode: "insensitive" };
+      where.profissao = { contains: profissao };
     }
 
     if (artista) {
-      where.artista = { contains: artista, mode: "insensitive" };
+      where.artista = { contains: artista };
     }
 
     if (anoCriacao) {
@@ -73,7 +90,6 @@ export async function GET(request) {
 
     // Filtros de data (para nascimento, data relacionada, ou eventos)
     if (dataInicio || dataFim) {
-      where.OR = where.OR || [];
       const dataFilters = [];
 
       // Para pessoas (data de nascimento)
@@ -108,11 +124,18 @@ export async function GET(request) {
         dataFilters.push(coletivoFilter);
       }
 
-      where.OR.push(...dataFilters);
+      // Combinar filtros de data com filtros existentes
+      if (where.OR) {
+        // Se já existe OR (de search), combinar com dataFilters
+        where.OR = [...where.OR, ...dataFilters];
+      } else {
+        // Se não existe OR, criar com dataFilters
+        where.OR = dataFilters;
+      }
     }
 
-    // Buscar entidades com filtros
-    const entidades = await prisma.entidade.findMany({
+    // Buscar memorias com filtros
+    const memorias = await prisma.memoria.findMany({
       where,
       include: {
         usuario: { select: { fullName: true } },
@@ -132,22 +155,22 @@ export async function GET(request) {
     });
 
     // Calcular score
-    const entidadesComScore = entidades.map((entidade) => ({
-      ...entidade,
+    const memoriasComScore = memorias.map((memoria) => ({
+      ...memoria,
       score:
-        entidade._count.comentarios +
-        entidade._count.curtidas +
-        entidade._count.medias,
+        memoria._count.comentarios +
+        memoria._count.curtidas +
+        memoria._count.medias,
     }));
 
-    return NextResponse.json(entidadesComScore);
+    return NextResponse.json(memoriasComScore);
   } catch (error) {
-    console.error("Erro ao buscar entidades:", error);
+    console.error("Erro ao buscar memorias:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
 
-// POST /api/entidades
+// POST /api/memorias
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -247,7 +270,7 @@ export async function POST(request) {
       );
     }
 
-    const entidade = await prisma.entidade.create({
+    const memoria = await prisma.memoria.create({
       data: {
         tipo,
         nome,
@@ -277,9 +300,9 @@ export async function POST(request) {
       },
     });
 
-    return NextResponse.json(entidade, { status: 201 });
+    return NextResponse.json(memoria, { status: 201 });
   } catch (error) {
-    console.error("Erro ao criar entidade:", error);
+    console.error("Erro ao criar memoria:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }
 }
