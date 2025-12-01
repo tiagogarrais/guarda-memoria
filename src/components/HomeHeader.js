@@ -1,13 +1,26 @@
 "use client";
 
 import { signIn, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function HomeHeader() {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   const [isLoginExpanded, setIsLoginExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar se é mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile(); // Verificar no primeiro load
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <header
@@ -23,18 +36,19 @@ export default function HomeHeader() {
         style={{
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: "0 2rem",
+          padding: isMobile ? "0 0.75rem" : "0 1rem", // Padding ainda menor em mobile
         }}
       >
         {/* Parte superior - Logo e Login */}
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
+            justifyContent: isMobile ? "center" : "space-between", // Centraliza em mobile
+            alignItems: isMobile ? "center" : "flex-start",
             marginBottom: "2rem",
             flexWrap: "wrap",
-            gap: "1.5rem",
+            flexDirection: isMobile ? "column" : "row", // Organiza em coluna no mobile
+            gap: isMobile ? "1rem" : "1.5rem", // Gap menor em mobile
           }}
         >
           {/* Logo */}
@@ -56,20 +70,21 @@ export default function HomeHeader() {
             <div
               style={{
                 background: "rgba(255,255,255,0.1)",
-                padding: "1.5rem",
+                padding: isMobile ? "1rem" : "1.5rem", // Padding responsivo
                 borderRadius: "12px",
                 backdropFilter: "blur(10px)",
                 border: "1px solid rgba(255,255,255,0.2)",
-                minWidth: "280px",
-                maxWidth: "350px",
+                minWidth: isMobile ? "200px" : "240px", // Largura mínima bem menor em mobile
+                maxWidth: isMobile ? "300px" : "100%", // Largura máxima em mobile
                 width: "100%",
-                flexShrink: 0,
+                flexShrink: isMobile ? 1 : 0, // Permite encolher em mobile
+                boxSizing: "border-box",
               }}
             >
               <h3
                 style={{
                   margin: "0 0 1rem 0",
-                  fontSize: "1.2rem",
+                  fontSize: isMobile ? "1.1rem" : "1.2rem", // Fonte menor em mobile
                   fontWeight: "600",
                 }}
               >

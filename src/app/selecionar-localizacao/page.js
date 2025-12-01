@@ -103,7 +103,9 @@ export default function SelecionarLocalizacao() {
   const handleCidadeFavorita = async (cidade) => {
     try {
       const response = await fetch(
-        `/api/cidades?estado=${cidade.stateId}&nome=${encodeURIComponent(cidade.cityName)}`
+        `/api/cidades?estado=${cidade.stateId}&nome=${encodeURIComponent(
+          cidade.cityName
+        )}`
       );
       if (!response.ok) {
         throw new Error("Erro ao buscar cidade");
@@ -152,7 +154,9 @@ export default function SelecionarLocalizacao() {
           <h3 style={{ marginTop: 0, color: "#495057" }}>
             ⭐ Suas Cidades Favoritas
           </h3>
-          <p style={{ fontSize: "14px", color: "#6c757d", marginBottom: "12px" }}>
+          <p
+            style={{ fontSize: "14px", color: "#6c757d", marginBottom: "12px" }}
+          >
             Acesse rapidamente suas cidades favoritas:
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
