@@ -13,17 +13,16 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
-  @@index([userId], map: "Account_userId_fkey")
 }
 
 model Session {
@@ -32,43 +31,37 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
-  @@index([userId], map: "Session_userId_fkey")
+model State {
+  id        Int     @id
+  name      String  @unique
+  cities    City[]
+}
+
+model City {
+  id        Int     @id
+  name      String
+  stateId   Int
+  state     State   @relation(fields: [stateId], references: [id])
+  users     User[]  // Usuários que têm esta cidade como localização
+  medias    Media[] // Mídias desta cidade
+
+  @@index([stateId])
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String    @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
+  stateId       Int?      // ID do estado (ex: 11 para Rondônia)
+  cityId        Int?      // ID da cidade (ex: 1100015)
+  city          City?     @relation(fields: [cityId], references: [id])
   accounts      Account[]
   sessions      Session[]
-  profile       Usuario?
-}
-
-model Usuario {
-  id                  String       @id @default(uuid())
-  userId              String       @unique
-  fullName            String?
-  birthDate           DateTime?
-  cpf                 String?      @unique
-  whatsapp            String?
-  whatsappCountryCode String?      @default("55")
-  whatsappConsent     Boolean      @default(false)
-  bio                 String?      @db.Text
-  fotoPerfilUrl       String?
-  cidadesFavoritas    String?      @db.Text
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
-  comentarios         Comentario[]
-  curtidas            Curtida[]
-  denuncias           Denuncia[]
-  logs                Log[]
-  medias              Media[]
-  memorias            Memoria[]
-  pessoas             Pessoa[]
-  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medias        Media[]
 }
 
 model VerificationToken {
@@ -79,167 +72,18 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Cidade {
-  id         String    @id @default(uuid())
-  estado     String
-  nome       String
-  slug       String    @unique
-  codigoIbge String?   @unique
-  memorias   Memoria[]
-  pessoas    Pessoa[]
-
-  @@unique([estado, nome])
-}
-
-model Memoria {
-  id                String       @id @default(uuid())
-  tipo              TipoMemoria
-  nome              String
-  descricao         String?      @db.Text
-  fotoUrl           String?
-  cidadeId          String
-  usuarioId         String
-  dataNascimento    DateTime?
-  profissao         String?
-  categoria         String?
-  tags              String?      @db.Text
-  localizacao       String?
-  dataRelacionada   DateTime?
-  dataInicio        DateTime?
-  dataFim           DateTime?
-  artista           String?
-  anoCriacao        Int?
-  tecnica           String?
-  arquivoUrl        String?
-  tipoArquivo       String?
-  tamanhoArquivo    Int?
-  nomeArquivo       String?
-  membrosPrincipais String?      @db.Text
-  dataFormacao      DateTime?
-  tipoColetivo      String?
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  comentarios       Comentario[]
-  curtidas          Curtida[]
-  denuncias         Denuncia[]   @relation("DenunciaMemoria")
-  medias            Media[]
-  cidade            Cidade       @relation(fields: [cidadeId], references: [id])
-  usuario           Usuario      @relation(fields: [usuarioId], references: [id])
-
-  @@index([cidadeId])
-  @@index([tipo])
-  @@index([usuarioId], map: "Memoria_usuarioId_fkey")
-}
-
-model Pessoa {
-  id             String       @id @default(uuid())
-  nome           String
-  historia       String?      @db.Text
-  fotoUrl        String?
-  cidadeId       String
-  usuarioId      String
-  dataNascimento DateTime?
-  profissao      String?
-  categoria      String?
-  tags           String?      @db.Text
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  comentarios    Comentario[]
-  denuncias      Denuncia[]   @relation("DenunciaPessoa")
-  medias         Media[]
-  cidade         Cidade       @relation(fields: [cidadeId], references: [id])
-  usuario        Usuario      @relation(fields: [usuarioId], references: [id])
-
-  @@index([cidadeId])
-  @@index([usuarioId], map: "Pessoa_usuarioId_fkey")
-}
-
-model Comentario {
-  id        String     @id @default(uuid())
-  pessoaId  String?
-  memoriaId String?
-  usuarioId String
-  texto     String?    @db.Text
-  mediaUrl  String?
-  mediaTipo String?
-  createdAt DateTime   @default(now())
-  memoria   Memoria?   @relation(fields: [memoriaId], references: [id], onDelete: Cascade)
-  pessoa    Pessoa?    @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
-  denuncias Denuncia[] @relation("DenunciaComentario")
-
-  @@index([pessoaId])
-  @@index([memoriaId])
-  @@index([usuarioId], map: "Comentario_usuarioId_fkey")
-}
-
 model Media {
-  id        String   @id @default(uuid())
-  pessoaId  String
-  memoriaId String?
-  usuarioId String
-  tipo      String
-  url       String
+  id        String   @id @default(cuid())
+  publicId  String   @unique // ID único do Cloudinary
+  url       String   // URL pública do arquivo
+  type      String   // "image", "video", "audio"
+  userId    String   // Relaciona com o usuário
+  stateId   Int      // ID do estado
+  cityId    Int      // ID da cidade
+  city      City     @relation(fields: [cityId], references: [id])
   createdAt DateTime @default(now())
-  memoria   Memoria? @relation(fields: [memoriaId], references: [id], onDelete: Cascade)
-  pessoa    Pessoa   @relation(fields: [pessoaId], references: [id], onDelete: Cascade)
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([pessoaId])
-  @@index([memoriaId])
-  @@index([usuarioId], map: "Media_usuarioId_fkey")
-}
-
-model Curtida {
-  memoriaId String
-  usuarioId String
-  createdAt DateTime @default(now())
-  memoria   Memoria  @relation(fields: [memoriaId], references: [id], onDelete: Cascade)
-  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
-
-  @@unique([memoriaId, usuarioId])
-  @@index([memoriaId])
-  @@index([usuarioId], map: "Curtida_usuarioId_fkey")
-}
-
-model Log {
-  id        String   @id @default(uuid())
-  usuarioId String?
-  acao      String
-  detalhes  String?  @db.Text
-  timestamp DateTime @default(now())
-  usuario   Usuario? @relation(fields: [usuarioId], references: [id])
-
-  @@index([usuarioId])
-  @@index([timestamp])
-}
-
-model Denuncia {
-  id           String      @id @default(uuid())
-  pessoaId     String?
-  memoriaId    String?
-  comentarioId String?
-  usuarioId    String
-  motivo       String      @db.Text
-  status       String      @default("pendente")
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  comentario   Comentario? @relation("DenunciaComentario", fields: [comentarioId], references: [id], map: "DenunciaComentario_fkey")
-  memoria      Memoria?    @relation("DenunciaMemoria", fields: [memoriaId], references: [id], map: "DenunciaMemoria_fkey")
-  pessoa       Pessoa?     @relation("DenunciaPessoa", fields: [pessoaId], references: [id], map: "DenunciaPessoa_fkey")
-  usuario      Usuario     @relation(fields: [usuarioId], references: [id])
-
-  @@index([pessoaId])
-  @@index([memoriaId])
-  @@index([comentarioId])
-  @@index([usuarioId], map: "Denuncia_usuarioId_fkey")
-}
-
-enum TipoMemoria {
-  PESSOA
-  LUGAR
-  DATA
-  EVENTO
-  OBRA_ARTE
-  COLETIVO_ORGANIZADO
+  @@index([userId])
+  @@index([stateId, cityId])
 }

@@ -1,27 +1,3 @@
-node_modules/
-
-# Next.js build
-.next/
-
-# Environment files
+node_modules
+.next
 .env
-.env.local
-.env.local.bak
-.env.development.local
-.env.production.local
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Mac
-.DS_Store
-
-# Prisma migrations (optional - keep migrations folder out of repo if you prefer)
-/prisma/migrations/
-
-# Editor folders
-.vscode/
-.idea/
