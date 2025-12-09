@@ -42,29 +42,61 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {medias.map((media) => (
-            <div key={media.id} className="border rounded p-4">
-              {media.type === "image" && (
-                <Image
-                  src={media.url}
-                  alt="Mídia"
-                  width={400}
-                  height={300}
-                  className="w-full h-48 object-cover rounded"
-                />
+            <div
+              key={media.id}
+              className="border rounded p-4 bg-white shadow-sm"
+            >
+              {/* Mensagem de texto - sempre mostrar se existir */}
+              {media.text && (
+                <div className="mb-3">
+                  <p className="text-gray-800 text-base leading-relaxed">
+                    {media.text}
+                  </p>
+                </div>
               )}
+
+              {/* Imagem */}
+              {media.type === "image" && media.url && (
+                <div className="mb-3">
+                  <Image
+                    src={media.url}
+                    alt="Mídia"
+                    width={400}
+                    height={300}
+                    className="w-full h-48 object-cover rounded"
+                  />
+                </div>
+              )}
+
+              {/* Vídeo */}
               {media.type === "video" && (
-                <video controls className="w-full h-48 object-cover rounded">
-                  <source src={media.url} />
-                </video>
+                <div className="mb-3">
+                  <video controls className="w-full h-48 object-cover rounded">
+                    <source src={media.url} />
+                  </video>
+                </div>
               )}
+
+              {/* Áudio */}
               {media.type === "audio" && (
-                <audio controls className="w-full">
-                  <source src={media.url} />
-                </audio>
+                <div className="mb-3">
+                  <audio controls className="w-full">
+                    <source src={media.url} />
+                  </audio>
+                </div>
               )}
-              <div className="mt-2 text-sm text-gray-600">
-                <p>Por: {media.user?.name || "Usuário"}</p>
+
+              {/* Informações do usuário e data */}
+              <div className="text-sm text-gray-600 border-t pt-2">
+                <p className="font-medium">
+                  Por: {media.user?.name || "Usuário"}
+                </p>
                 <p>Em: {new Date(media.createdAt).toLocaleDateString()}</p>
+                {media.type !== "text" && media.url && (
+                  <p className="text-xs text-gray-500 capitalize">
+                    Tipo: {media.type}
+                  </p>
+                )}
               </div>
             </div>
           ))}

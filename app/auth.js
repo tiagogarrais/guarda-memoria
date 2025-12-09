@@ -21,6 +21,21 @@ export const authOptions = {
       }
       return session;
     },
+    signIn: async ({ user }) => {
+      // Buscar a cidade do usuário após login
+      const userData = await prisma.user.findUnique({
+        where: { email: user.email },
+        select: { cityId: true },
+      });
+
+      if (userData?.cityId) {
+        // Redirecionar para a página da cidade
+        return `/cidade/${userData.cityId}`;
+      }
+
+      // Se não tiver cidade definida, redirecionar para seleção de localização
+      return "/select-location";
+    },
   },
 };
 

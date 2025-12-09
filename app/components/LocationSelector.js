@@ -76,8 +76,8 @@ export default function LocationSelector({
         if (onLocationSelected) {
           onLocationSelected();
         } else {
-          // Forçar recarga completa para atualizar dados da localização
-          window.location.href = "/";
+          // Redirecionar para a página da cidade selecionada
+          router.push(`/cidade/${selectedCity}`);
         }
       } else {
         alert("Erro ao salvar localização");

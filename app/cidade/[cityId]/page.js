@@ -3,7 +3,7 @@ import { authOptions } from "../../auth";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
-import MediaFeed from "../../components/MediaFeed";
+import CityFeedSection from "../../components/CityFeedSection";
 
 const prisma = new PrismaClient();
 
@@ -56,7 +56,7 @@ export default async function CityPage({ params }) {
       </div>
 
       <div className="w-full max-w-4xl">
-        <MediaFeed cityId={cityId} />
+        <CityFeedSection cityId={cityId} cityName={cityData.name} />
       </div>
     </main>
   );

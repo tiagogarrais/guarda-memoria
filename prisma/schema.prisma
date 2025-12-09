@@ -74,9 +74,10 @@ model VerificationToken {
 
 model Media {
   id        String   @id @default(cuid())
-  publicId  String   @unique // ID único do Cloudinary
-  url       String   // URL pública do arquivo
-  type      String   // "image", "video", "audio"
+  publicId  String?  @unique // ID único do Cloudinary (opcional para texto)
+  url       String?  // URL pública do arquivo (opcional para texto)
+  text      String?  // Texto da mensagem (opcional)
+  type      String   // "image", "video", "audio", "text"
   userId    String   // Relaciona com o usuário
   stateId   Int      // ID do estado
   cityId    Int      // ID da cidade

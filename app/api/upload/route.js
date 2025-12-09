@@ -22,14 +22,16 @@ export async function POST(request) {
 
     const formData = await request.formData();
     const file = formData.get("file");
+    const audio = formData.get("audio");
+    const text = formData.get("text");
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    // Verificar se pelo menos um dos campos foi fornecido
+    if (!file && !audio && !text) {
+      return NextResponse.json(
+        { error: "No content provided" },
+        { status: 400 }
+      );
     }
-
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
 
     // Get user with location
     const user = await prisma.user.findUnique({
@@ -48,30 +50,62 @@ export async function POST(request) {
       );
     }
 
-    // Upload to Cloudinary
-    const result = await cloudinary.uploader.upload(
-      `data:${file.type};base64,${buffer.toString("base64")}`,
-      {
-        resource_type: "auto",
-        folder: "guarda-memoria",
-      }
-    );
+    let mediaData = {
+      type: "text",
+      userId: user.id,
+      stateId: user.stateId,
+      cityId: user.cityId,
+    };
+
+    // Se há texto, salvar como texto
+    if (text) {
+      mediaData.text = text;
+      mediaData.type = "text";
+    }
+
+    // Se há arquivo (foto/vídeo)
+    if (file) {
+      // Convert file to buffer
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(
+        `data:${file.type};base64,${buffer.toString("base64")}`,
+        {
+          resource_type: "auto",
+          folder: "guarda-memoria",
+        }
+      );
+
+      mediaData.publicId = result.public_id;
+      mediaData.url = result.secure_url;
+      mediaData.type = result.resource_type === "image" ? "image" : "video";
+    }
+
+    // Se há áudio
+    if (audio) {
+      // Convert audio blob to buffer
+      const bytes = await audio.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(
+        `data:audio/wav;base64,${buffer.toString("base64")}`,
+        {
+          resource_type: "video", // Cloudinary trata áudio como vídeo
+          folder: "guarda-memoria",
+        }
+      );
+
+      mediaData.publicId = result.public_id;
+      mediaData.url = result.secure_url;
+      mediaData.type = "audio";
+    }
 
     // Save to database
     const media = await prisma.media.create({
-      data: {
-        publicId: result.public_id,
-        url: result.secure_url,
-        type:
-          result.resource_type === "image"
-            ? "image"
-            : result.resource_type === "video"
-            ? "video"
-            : "audio",
-        userId: user.id,
-        stateId: user.stateId,
-        cityId: user.cityId,
-      },
+      data: mediaData,
     });
 
     return NextResponse.json({
@@ -79,6 +113,7 @@ export async function POST(request) {
       media: {
         id: media.id,
         url: media.url,
+        text: media.text,
         type: media.type,
       },
     });
