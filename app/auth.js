@@ -14,6 +14,10 @@ export const authOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/auth/signin",
+    error: "/auth/error",
+  },
   callbacks: {
     session: async ({ session, user }) => {
       if (user) {
@@ -21,20 +25,12 @@ export const authOptions = {
       }
       return session;
     },
-    signIn: async ({ user }) => {
-      // Buscar a cidade do usuário após login
-      const userData = await prisma.user.findUnique({
-        where: { email: user.email },
-        select: { cityId: true },
-      });
-
-      if (userData?.cityId) {
-        // Redirecionar para a página da cidade
-        return `/cidade/${userData.cityId}`;
+    redirect: async ({ url, baseUrl }) => {
+      // Após login bem-sucedido, sempre redirecionar para seleção de localização
+      if (url.startsWith(baseUrl)) {
+        return "/select-location";
       }
-
-      // Se não tiver cidade definida, redirecionar para seleção de localização
-      return "/select-location";
+      return url;
     },
   },
 };

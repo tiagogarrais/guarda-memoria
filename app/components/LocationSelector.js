@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 export default function LocationSelector({
   onLocationSelected,
   currentLocation,
+  allowAutoRedirect = true,
 }) {
   const [states, setStates] = useState({});
   const [cities, setCities] = useState([]);
@@ -17,6 +18,13 @@ export default function LocationSelector({
   );
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Verificar se usuário já tem localização e redirecionar automaticamente
+  useEffect(() => {
+    if (allowAutoRedirect && currentLocation?.cityId) {
+      router.push(`/cidade/${currentLocation.cityId}`);
+    }
+  }, [currentLocation, router, allowAutoRedirect]);
 
   useEffect(() => {
     // Carregar dados de estados
@@ -62,23 +70,21 @@ export default function LocationSelector({
     e.preventDefault();
     if (!selectedState || !selectedCity) return;
 
+    const locationData = {
+      stateId: parseInt(selectedState),
+      cityId: parseInt(selectedCity),
+    };
+
     try {
       const response = await fetch("/api/update-location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          stateId: parseInt(selectedState),
-          cityId: parseInt(selectedCity),
-        }),
+        body: JSON.stringify(locationData),
       });
 
       if (response.ok) {
-        if (onLocationSelected) {
-          onLocationSelected();
-        } else {
-          // Redirecionar para a página da cidade selecionada
-          router.push(`/cidade/${selectedCity}`);
-        }
+        // Redirecionar diretamente para a página da cidade selecionada
+        router.push(`/cidade/${selectedCity}`);
       } else {
         alert("Erro ao salvar localização");
       }

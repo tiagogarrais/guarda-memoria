@@ -42,6 +42,7 @@ model State {
 model City {
   id        Int     @id
   name      String
+  slug      String  @unique // Slug único: nome-da-cidade-sigla-estado
   stateId   Int
   state     State   @relation(fields: [stateId], references: [id])
   users     User[]  // Usuários que têm esta cidade como localização
