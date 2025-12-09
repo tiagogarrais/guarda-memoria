@@ -30,8 +30,8 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-semibold mb-4">
-        {cityId ? "Feed da Cidade" : "Seu Feed de Memórias"}
+      <h2 className="text-lg font-semibold mb-4 text-center">
+        {cityId ? "Memórias da Cidade" : "Suas memórias"}
       </h2>
       {medias.length === 0 ? (
         <p>

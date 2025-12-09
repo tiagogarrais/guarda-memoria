@@ -14,8 +14,10 @@ export default function CityFeedSection({ cityId, cityName }) {
 
   return (
     <>
-      <UploadForm onUploadSuccess={handleUploadSuccess} userCity={{ id: cityId, name: cityName }} />
-      <h2 className="text-xl font-semibold mb-4 text-center">Feed da Cidade</h2>
+      <UploadForm
+        onUploadSuccess={handleUploadSuccess}
+        userCity={{ id: cityId, name: cityName }}
+      />
       <MediaFeed cityId={cityId} refreshTrigger={refreshTrigger} />
     </>
   );
