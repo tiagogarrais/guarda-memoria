@@ -79,6 +79,7 @@ model Media {
   url       String?  // URL pública do arquivo (opcional para texto)
   text      String?  // Texto da mensagem (opcional)
   type      String   // "image", "video", "audio", "text"
+  categories String? // JSON array com categorias: ["local", "pessoa", "historia"]
   userId    String   // Relaciona com o usuário
   stateId   Int      // ID do estado
   cityId    Int      // ID da cidade

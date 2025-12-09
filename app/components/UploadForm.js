@@ -11,10 +11,64 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const router = useRouter();
+
+  // Definição das categorias organizadas por grupos
+  const categoryGroups = {
+    "🏛️ Locais & Espaços": [
+      "local",
+      "arquitetura",
+      "natureza",
+      "comercio",
+      "transporte",
+      "religiao",
+    ],
+    "👥 Pessoas & História": ["pessoa", "educacao", "esporte"],
+    "🎭 Cultura & Tradições": [
+      "evento",
+      "tradiccao",
+      "lenda",
+      "comida",
+      "artesanato",
+      "musica",
+    ],
+    "🎨 Artes & Criatividade": [
+      "pintura",
+      "escultura",
+      "fotografia",
+      "video",
+      "poesia",
+    ],
+    "📅 Tempo & Marcos": ["data"],
+  };
+
+  const categoryLabels = {
+    local: "Local",
+    arquitetura: "Arquitetura",
+    natureza: "Natureza",
+    comercio: "Comércio",
+    transporte: "Transporte",
+    religiao: "Religião",
+    pessoa: "Pessoa",
+    educacao: "Educação",
+    esporte: "Esporte",
+    evento: "Evento",
+    tradiccao: "Tradição",
+    lenda: "Lenda",
+    comida: "Comida",
+    artesanato: "Artesanato",
+    musica: "Música",
+    pintura: "Pintura",
+    escultura: "Escultura",
+    fotografia: "Fotografia",
+    video: "Vídeo",
+    poesia: "Poesia",
+    data: "Data",
+  };
 
   const handleFileSelect = (type) => {
     setShowAttachmentOptions(false);
@@ -95,6 +149,9 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
     if (text.trim()) formData.append("text", text.trim());
     if (file) formData.append("file", file);
     if (audioBlob) formData.append("audio", audioBlob);
+    if (selectedCategories.length > 0) {
+      formData.append("categories", JSON.stringify(selectedCategories));
+    }
 
     try {
       const response = await fetch("/api/upload", {
@@ -109,6 +166,7 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
         setText("");
         setFile(null);
         setAudioBlob(null);
+        setSelectedCategories([]);
         setTimeout(() => setMessage(""), 3000);
         if (onUploadSuccess) onUploadSuccess();
       } else {
@@ -124,6 +182,14 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
   const removeAttachment = () => {
     setFile(null);
     setAudioBlob(null);
+  };
+
+  const handleCategoryChange = (category) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
   };
 
   return (
@@ -153,7 +219,7 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
                   d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                 />
               </svg>
-              <span>Trocar</span>
+              <span>Trocar cidade</span>
             </button>
           )}
         </div>
@@ -300,6 +366,56 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
               </div>
             </div>
           )}
+
+          {/* Categorias da publicação */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+              <span className="mr-2">🏷️</span>
+              CATEGORIAS DA PUBLICAÇÃO
+              <span className="text-xs font-normal text-gray-500 ml-2">
+                (opcional)
+              </span>
+            </h3>
+
+            <div className="space-y-4">
+              {Object.entries(categoryGroups).map(([groupName, categories]) => (
+                <div key={groupName} className="space-y-2">
+                  <h4 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                    {groupName}
+                  </h4>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {categories.map((category) => (
+                      <label
+                        key={category}
+                        className="flex items-center space-x-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedCategories.includes(category)}
+                          onChange={() => handleCategoryChange(category)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-gray-700">
+                          {categoryLabels[category]}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {selectedCategories.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs text-gray-600">
+                  Categorias selecionadas:{" "}
+                  {selectedCategories
+                    .map((cat) => categoryLabels[cat])
+                    .join(", ")}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Preview do anexo */}
           {(file || audioBlob) && (

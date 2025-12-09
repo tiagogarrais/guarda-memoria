@@ -24,6 +24,7 @@ export async function POST(request) {
     const file = formData.get("file");
     const audio = formData.get("audio");
     const text = formData.get("text");
+    const categories = formData.get("categories");
 
     // Verificar se pelo menos um dos campos foi fornecido
     if (!file && !audio && !text) {
@@ -55,6 +56,7 @@ export async function POST(request) {
       userId: user.id,
       stateId: user.stateId,
       cityId: user.cityId,
+      categories: categories || null,
     };
 
     // Se há texto, salvar como texto
