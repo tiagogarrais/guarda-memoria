@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth";
 import { PrismaClient } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
+import { updateMediaScore } from "../../../lib/mediaUtils";
 
 const prisma = new PrismaClient();
 
@@ -111,6 +112,16 @@ export async function POST(request) {
     const media = await prisma.media.create({
       data: mediaData,
     });
+
+    // Se é um comentário, atualizar a pontuação da mídia pai
+    if (parentId) {
+      try {
+        await updateMediaScore(parentId);
+      } catch (error) {
+        console.error("Erro ao atualizar pontuação da mídia pai:", error);
+        // Não falhar a requisição por causa disso
+      }
+    }
 
     return NextResponse.json({
       message: "Upload successful",

@@ -31,12 +31,13 @@ export async function GET(request) {
       };
     }
 
-    // Buscar mídias, ordenadas por data de criação (mais recentes primeiro)
+    // Buscar mídias, ordenadas por pontuação (mais pontos primeiro)
     const medias = await prisma.media.findMany({
       where: whereClause,
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [
+        { score: "desc" }, // Primeiro por pontuação (decrescente)
+        { createdAt: "desc" }, // Depois por data (mais recentes primeiro)
+      ],
       include: {
         user: {
           select: { name: true, image: true },
@@ -55,6 +56,7 @@ export async function GET(request) {
         _count: {
           select: {
             knowledge: true, // Contar conhecimentos
+            replies: true, // Contar comentários
           },
         },
         knowledge: {
@@ -69,11 +71,12 @@ export async function GET(request) {
       },
     });
 
-    // Processar os dados para incluir informações de conhecimento
+    // Processar os dados para incluir informações de conhecimento e pontuação
     const processedMedias = medias.map((media) => ({
       ...media,
       knowledgeCount: media._count.knowledge,
       userKnows: media.knowledge.length > 0,
+      score: media._count.replies + media._count.knowledge, // Pontuação = comentários + conhecimentos
       _count: undefined, // Remover o campo _count do resultado final
       knowledge: undefined, // Remover o campo knowledge do resultado final
     }));

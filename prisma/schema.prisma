@@ -87,6 +87,7 @@ model Media {
   cityId    Int      // ID da cidade
   city      City     @relation(fields: [cityId], references: [id])
   createdAt DateTime @default(now())
+  score     Int      @default(0) // Pontuação baseada em comentários e conhecimentos
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   parentId  String?  // Novo campo: ID da mídia pai (para comentários)
   parent    Media?   @relation("MediaReplies", fields: [parentId], references: [id], onDelete: Cascade)
@@ -96,6 +97,7 @@ model Media {
   @@index([userId])
   @@index([stateId, cityId])
   @@index([parentId]) // Novo índice para buscas eficientes
+  @@index([score]) // Novo índice para ordenação por pontuação
 }
 
 model MediaKnowledge {

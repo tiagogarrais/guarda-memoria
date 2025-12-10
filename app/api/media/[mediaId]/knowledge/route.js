@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../auth";
 import { PrismaClient } from "@prisma/client";
+import { updateMediaScore } from "../../../../../lib/mediaUtils";
 
 const prisma = new PrismaClient();
 
@@ -51,6 +52,9 @@ export async function POST(request, { params }) {
       action = "added";
     }
 
+    // Atualizar a pontuação da mídia
+    const newScore = await updateMediaScore(mediaId);
+
     // Contar quantos conhecimentos esta mídia tem
     const knowledgeCount = await prisma.mediaKnowledge.count({
       where: { mediaId },
@@ -60,6 +64,7 @@ export async function POST(request, { params }) {
       action,
       knowledgeCount,
       userKnows: action === "added",
+      score: newScore,
     });
   } catch (error) {
     console.error("Erro ao processar conhecimento:", error);

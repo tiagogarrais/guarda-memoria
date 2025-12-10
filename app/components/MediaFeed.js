@@ -68,6 +68,7 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                   ...media,
                   knowledgeCount: result.knowledgeCount,
                   userKnows: result.userKnows,
+                  score: result.score,
                 }
               : media
           )
