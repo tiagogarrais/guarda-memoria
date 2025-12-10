@@ -36,6 +36,7 @@ model Session {
 model State {
   id        Int     @id
   name      String  @unique
+  sigla     String  @unique
   cities    City[]
 }
 
@@ -63,6 +64,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   medias        Media[]
+  knowledge     MediaKnowledge[] // Relacionamento com conhecimentos
 }
 
 model VerificationToken {
@@ -89,8 +91,22 @@ model Media {
   parentId  String?  // Novo campo: ID da mídia pai (para comentários)
   parent    Media?   @relation("MediaReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Media[]  @relation("MediaReplies") // Relacionamento para respostas
+  knowledge MediaKnowledge[] // Relacionamento com conhecimentos
 
   @@index([userId])
   @@index([stateId, cityId])
   @@index([parentId]) // Novo índice para buscas eficientes
+}
+
+model MediaKnowledge {
+  id       String @id @default(cuid())
+  userId   String
+  mediaId  String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media    Media  @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, mediaId]) // Um usuário só pode conhecer uma mídia uma vez
+  @@index([userId])
+  @@index([mediaId])
 }

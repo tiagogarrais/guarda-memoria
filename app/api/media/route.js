@@ -52,10 +52,33 @@ export async function GET(request) {
             createdAt: "asc", // Ordem cronológica para comentários
           },
         },
+        _count: {
+          select: {
+            knowledge: true, // Contar conhecimentos
+          },
+        },
+        knowledge: {
+          // Verificar se o usuário atual conhece esta mídia
+          where: {
+            userId: session.user.id,
+          },
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
-    return NextResponse.json({ medias });
+    // Processar os dados para incluir informações de conhecimento
+    const processedMedias = medias.map((media) => ({
+      ...media,
+      knowledgeCount: media._count.knowledge,
+      userKnows: media.knowledge.length > 0,
+      _count: undefined, // Remover o campo _count do resultado final
+      knowledge: undefined, // Remover o campo knowledge do resultado final
+    }));
+
+    return NextResponse.json({ medias: processedMedias });
   } catch (error) {
     console.error("Error fetching media:", error);
     return NextResponse.json(

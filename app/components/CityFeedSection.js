@@ -4,7 +4,7 @@ import { useState } from "react";
 import UploadForm from "./UploadForm";
 import MediaFeed from "./MediaFeed";
 
-export default function CityFeedSection({ cityId, cityName }) {
+export default function CityFeedSection({ cityId, cityName, stateSigla }) {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleUploadSuccess = () => {
@@ -16,7 +16,7 @@ export default function CityFeedSection({ cityId, cityName }) {
     <>
       <UploadForm
         onUploadSuccess={handleUploadSuccess}
-        userCity={{ id: cityId, name: cityName }}
+        userCity={{ id: cityId, name: cityName, stateSigla }}
       />
       <MediaFeed cityId={cityId} refreshTrigger={refreshTrigger} />
     </>

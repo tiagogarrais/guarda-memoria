@@ -16,6 +16,7 @@ export default function UploadForm({
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
+  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
   const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -24,12 +25,13 @@ export default function UploadForm({
   // Definição das categorias organizadas por grupos
   const categoryGroups = {
     "🏛️ Locais & Espaços": [
-      "local",
+      "lugar",
       "arquitetura",
       "natureza",
       "comercio",
       "transporte",
       "religiao",
+      "organizacao",
     ],
     "👥 Pessoas & História": ["pessoa", "educacao", "esporte"],
     "🎭 Cultura & Tradições": [
@@ -51,12 +53,13 @@ export default function UploadForm({
   };
 
   const categoryLabels = {
-    local: "Local",
+    lugar: "Lugar",
     arquitetura: "Arquitetura",
     natureza: "Natureza",
     comercio: "Comércio",
     transporte: "Transporte",
     religiao: "Religião",
+    organizacao: "Organização",
     pessoa: "Pessoa",
     educacao: "Educação",
     esporte: "Esporte",
@@ -202,7 +205,13 @@ export default function UploadForm({
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">
-            Enviando uma memória para {userCity ? `para ${userCity.name}` : ""}
+            {userCity
+              ? `${userCity.name}${
+                  userCity.stateSigla
+                    ? ` - ${userCity.stateSigla.toUpperCase()}`
+                    : ""
+                }`
+              : ""}
           </h2>
           {userCity && (
             <button
@@ -236,7 +245,7 @@ export default function UploadForm({
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="O que você está enviando?"
+              placeholder="Compartilhe sua memória..."
               className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
               rows={3}
             />
@@ -374,43 +383,68 @@ export default function UploadForm({
 
           {/* Categorias da publicação */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-              <span className="mr-2">🏷️</span>
-              CATEGORIAS DA PUBLICAÇÃO
-              <span className="text-xs font-normal text-gray-500 ml-2">
-                (opcional)
-              </span>
-            </h3>
+            <button
+              type="button"
+              onClick={() => setCategoriesExpanded(!categoriesExpanded)}
+              className="w-full flex items-center justify-between text-sm font-semibold text-gray-700 hover:text-gray-900 transition-colors mb-3"
+            >
+              <div className="flex items-center">
+                <span className="mr-2">🏷️</span>
+                CATEGORIAS DA PUBLICAÇÃO
+                <span className="text-xs font-normal text-gray-500 ml-2">
+                  (opcional)
+                </span>
+              </div>
+              <svg
+                className={`w-5 h-5 transition-transform ${
+                  categoriesExpanded ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
 
-            <div className="space-y-4">
-              {Object.entries(categoryGroups).map(([groupName, categories]) => (
-                <div key={groupName} className="space-y-2">
-                  <h4 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
-                    {groupName}
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {categories.map((category) => (
-                      <label
-                        key={category}
-                        className="flex items-center space-x-2 text-sm"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedCategories.includes(category)}
-                          onChange={() => handleCategoryChange(category)}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                        />
-                        <span className="text-gray-700">
-                          {categoryLabels[category]}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {categoriesExpanded && (
+              <div className="space-y-4">
+                {Object.entries(categoryGroups).map(
+                  ([groupName, categories]) => (
+                    <div key={groupName} className="space-y-2">
+                      <h4 className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                        {groupName}
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {categories.map((category) => (
+                          <label
+                            key={category}
+                            className="flex items-center space-x-2 text-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(category)}
+                              onChange={() => handleCategoryChange(category)}
+                              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                            />
+                            <span className="text-gray-700">
+                              {categoryLabels[category]}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
 
-            {selectedCategories.length > 0 && (
+            {selectedCategories.length > 0 && !categoriesExpanded && (
               <div className="mt-3 pt-3 border-t border-gray-200">
                 <p className="text-xs text-gray-600">
                   Categorias selecionadas:{" "}

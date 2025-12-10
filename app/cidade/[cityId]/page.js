@@ -28,7 +28,7 @@ export default async function CityPage({ params }) {
   // Buscar nome da cidade
   const cityData = await prisma.city.findUnique({
     where: { id: cityId },
-    select: { id: true, name: true },
+    select: { id: true, name: true, state: { select: { sigla: true } } },
   });
 
   if (!cityData) {
@@ -58,7 +58,11 @@ export default async function CityPage({ params }) {
       </div>
 
       <div className="w-full max-w-4xl">
-        <CityFeedSection cityId={cityId} cityName={cityData.name} />
+        <CityFeedSection
+          cityId={cityId}
+          cityName={cityData.name}
+          stateSigla={cityData.state.sigla}
+        />
       </div>
     </main>
   );

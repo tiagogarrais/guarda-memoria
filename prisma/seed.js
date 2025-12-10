@@ -60,6 +60,7 @@ async function main() {
   const statesData = Object.entries(data.states).map(([id, name]) => ({
     id: parseInt(id),
     name: name,
+    sigla: stateAbbreviations[parseInt(id)] || name.slice(0, 2).toLowerCase(),
   }));
 
   // Dados das cidades
