@@ -21,11 +21,13 @@ export async function GET(request) {
       // Buscar mídias da cidade especificada
       whereClause = {
         cityId: parseInt(cityId),
+        parentId: null, // Apenas mídias raiz, não comentários
       };
     } else {
       // Buscar mídias do usuário logado
       whereClause = {
         userId: session.user.id,
+        parentId: null, // Apenas mídias raiz, não comentários
       };
     }
 
@@ -38,6 +40,17 @@ export async function GET(request) {
       include: {
         user: {
           select: { name: true, image: true },
+        },
+        replies: {
+          // Novo: incluir respostas/comentários
+          include: {
+            user: {
+              select: { name: true, image: true },
+            },
+          },
+          orderBy: {
+            createdAt: "asc", // Ordem cronológica para comentários
+          },
         },
       },
     });

@@ -3,7 +3,11 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-export default function UploadForm({ onUploadSuccess, userCity }) {
+export default function UploadForm({
+  onUploadSuccess,
+  userCity,
+  parentId = null,
+}) {
   const [text, setText] = useState("");
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -152,6 +156,7 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
     if (selectedCategories.length > 0) {
       formData.append("categories", JSON.stringify(selectedCategories));
     }
+    if (parentId) formData.append("parentId", parentId); // Novo campo para comentários
 
     try {
       const response = await fetch("/api/upload", {
@@ -197,7 +202,7 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
       <div className="p-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">
-            Enviando mídia {userCity ? `para ${userCity.name}` : ""}
+            Enviando uma memória para {userCity ? `para ${userCity.name}` : ""}
           </h2>
           {userCity && (
             <button
@@ -231,7 +236,7 @@ export default function UploadForm({ onUploadSuccess, userCity }) {
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Digite sua mensagem..."
+              placeholder="O que você está enviando?"
               className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
               rows={3}
             />

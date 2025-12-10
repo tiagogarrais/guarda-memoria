@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import UploadForm from "./UploadForm";
 
 export default function MediaFeed({ refreshTrigger, cityId }) {
   const [medias, setMedias] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [replyingTo, setReplyingTo] = useState(null); // Estado para controlar resposta
 
   const fetchMedias = useCallback(async () => {
     try {
@@ -25,6 +27,15 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
   useEffect(() => {
     fetchMedias();
   }, [fetchMedias, refreshTrigger]);
+
+  const handleReply = (mediaId) => {
+    setReplyingTo(mediaId);
+  };
+
+  const handleReplySuccess = () => {
+    setReplyingTo(null);
+    fetchMedias(); // Recarregar feed após resposta
+  };
 
   if (loading) return <p>Carregando...</p>;
 
@@ -98,6 +109,63 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                   </p>
                 )}
               </div>
+
+              {/* Botão para responder */}
+              <button
+                onClick={() => handleReply(media.id)}
+                className="mt-2 text-blue-500 hover:underline"
+              >
+                Quero comentar ou adicionar mais memórias
+              </button>
+
+              {/* Formulário de resposta inline */}
+              {replyingTo === media.id && (
+                <UploadForm
+                  onUploadSuccess={handleReplySuccess}
+                  userCity={null} // Ou passe a cidade se necessário
+                  parentId={media.id}
+                />
+              )}
+
+              {/* Exibir comentários/respostas */}
+              {media.replies && media.replies.length > 0 && (
+                <div className="mt-4 border-t pt-4">
+                  <h4 className="text-sm font-semibold">Comentários:</h4>
+                  {media.replies.map((reply) => (
+                    <div key={reply.id} className="mt-2 p-2 bg-gray-50 rounded">
+                      {reply.text && (
+                        <p className="text-sm mb-1">{reply.text}</p>
+                      )}
+                      {reply.type === "image" && reply.url && (
+                        <Image
+                          src={reply.url}
+                          alt="Comentário"
+                          width={200}
+                          height={150}
+                          className="w-32 h-20 object-cover rounded"
+                        />
+                      )}
+                      {reply.type === "video" && (
+                        <video
+                          controls
+                          className="w-32 h-20 object-cover rounded"
+                        >
+                          <source src={reply.url} />
+                        </video>
+                      )}
+                      {reply.type === "audio" && (
+                        <audio controls className="w-32">
+                          <source src={reply.url} />
+                        </audio>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Por: {reply.user?.name || "Usuário"} -{" "}
+                        {new Date(reply.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -86,7 +86,11 @@ model Media {
   city      City     @relation(fields: [cityId], references: [id])
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parentId  String?  // Novo campo: ID da mídia pai (para comentários)
+  parent    Media?   @relation("MediaReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   Media[]  @relation("MediaReplies") // Relacionamento para respostas
 
   @@index([userId])
   @@index([stateId, cityId])
+  @@index([parentId]) // Novo índice para buscas eficientes
 }
