@@ -43,7 +43,7 @@ export default async function SelectLocationPage() {
           Selecione sua localização
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Escolha o estado e cidade onde você mora
+          Escolha um estado e cidade
         </p>
       </div>
 
