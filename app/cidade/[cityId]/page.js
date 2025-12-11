@@ -3,9 +3,16 @@ import { authOptions } from "../../auth";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
+import { Pacifico } from "next/font/google";
 import CityFeedSection from "../../components/CityFeedSection";
 
 const prisma = new PrismaClient();
+
+const pacifico = Pacifico({
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+});
 
 export default async function CityPage({ params }) {
   const session = await getServerSession(authOptions);
@@ -42,11 +49,14 @@ export default async function CityPage({ params }) {
 
   return (
     <>
-      {/* Header fixo */}
       <header className="bg-white shadow-sm border-b sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center py-4">
-            <h1 className="text-xl font-bold text-gray-900">Guarda Memória</h1>
+            <Link href="/">
+              <h1 className="text-xl font-bold text-gray-900">
+                Guarda Memória
+              </h1>
+            </Link>
           </div>
         </div>
       </header>
@@ -54,8 +64,10 @@ export default async function CityPage({ params }) {
       <main className="flex min-h-screen flex-col items-center p-6">
         <div className="z-10 max-w-5xl w-full font-mono text-sm mb-8">
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold">Memórias de</h1>
-            <h1 className="text-3xl font-bold">
+            <h1 className={`text-3xl font-bold ${pacifico.className}`}>
+              Memórias de
+            </h1>
+            <h1 className={`text-3xl ${pacifico.className}`}>
               {cityData.name} - {cityData.state.sigla.toUpperCase()}
             </h1>
           </div>
