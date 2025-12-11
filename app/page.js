@@ -38,28 +38,32 @@ export default async function Home() {
         {/* Header para usuários logados */}
         <header className="bg-white shadow-sm border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center space-x-4">
-                <h1 className="text-xl font-bold text-gray-900">
-                  Guarda Memória
-                </h1>
-                {userCity && (
+            <div className="flex flex-col justify-center items-center h-auto py-4 space-y-4">
+              <h1 className="text-xl font-bold text-gray-900 text-center">
+                Guarda Memória
+              </h1>
+              <div className="flex flex-col sm:flex-row justify-between items-center w-full space-y-4 sm:space-y-0">
+                <div className="flex items-center space-x-4">
+                  {userCity && (
+                    <Link
+                      href={`/cidade/${userCity.id}`}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                    >
+                      Página de {userCity.name}
+                    </Link>
+                  )}
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="text-gray-700">
+                    Olá, {session.user?.name}
+                  </span>
                   <Link
-                    href={`/cidade/${userCity.id}`}
-                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+                    href="/api/auth/signout"
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
                   >
-                    Página de {userCity.name}
+                    Sair
                   </Link>
-                )}
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Olá, {session.user?.name}</span>
-                <Link
-                  href="/api/auth/signout"
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors"
-                >
-                  Sair
-                </Link>
+                </div>
               </div>
             </div>
           </div>
