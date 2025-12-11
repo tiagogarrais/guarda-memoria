@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 import UploadForm from "./UploadForm";
 
 export default function MediaFeed({ refreshTrigger, cityId }) {
@@ -10,6 +11,7 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
   const [replyingTo, setReplyingTo] = useState(null); // Estado para controlar resposta
   const [selectedImage, setSelectedImage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data: session, status } = useSession();
 
   // Função helper para traduzir tipo de mídia e verbo
   const getMediaInfo = (type) => {
@@ -100,6 +102,24 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
     document.body.style.overflow = "auto"; // Unlock scroll
   };
 
+  const handleDelete = async (mediaId) => {
+    if (window.confirm("Tem certeza que deseja apagar esta publicação?")) {
+      try {
+        const response = await fetch(`/api/media/${mediaId}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          fetchMedias(); // Recarregar feed após deletar
+        } else {
+          alert("Erro ao apagar a publicação");
+        }
+      } catch (error) {
+        console.error("Erro ao deletar:", error);
+        alert("Erro ao apagar a publicação");
+      }
+    }
+  };
+
   // Close modal on ESC key
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -130,8 +150,18 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
             <div
               key={media.id}
               id={`media-${media.id}`}
-              className="border rounded p-4 bg-white shadow-sm"
+              className="border rounded p-4 bg-white shadow-sm relative"
             >
+              {status === "authenticated" &&
+                session?.user?.id == media.userId && (
+                  <button
+                    onClick={() => handleDelete(media.id)}
+                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg"
+                    title="Apagar publicação"
+                  >
+                    🗑️
+                  </button>
+                )}
               {/* Título da postagem */}
               <div className="mb-4">
                 <h3 className="text-lg font-bold text-gray-800 mb-2">
@@ -277,7 +307,20 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                 <div className="mt-4 border-t pt-4">
                   <h4 className="text-sm font-semibold">Comentários:</h4>
                   {media.replies.map((reply) => (
-                    <div key={reply.id} className="mt-2 p-2 bg-gray-50 rounded">
+                    <div
+                      key={reply.id}
+                      className="mt-2 p-2 bg-gray-50 rounded relative"
+                    >
+                      {status === "authenticated" &&
+                        session?.user?.id == reply.userId && (
+                          <button
+                            onClick={() => handleDelete(reply.id)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-red-500 text-sm"
+                            title="Apagar comentário"
+                          >
+                            🗑️
+                          </button>
+                        )}
                       {reply.text && (
                         <p className="text-sm mb-1">{reply.text}</p>
                       )}

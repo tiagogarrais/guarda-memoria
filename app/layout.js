@@ -1,4 +1,5 @@
 import "./globals.css";
+import ClientLayout from "./client-layout";
 
 export const metadata = {
   title: "Guarda Memória",
@@ -8,7 +9,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        <ClientLayout>{children}</ClientLayout>
+      </body>
     </html>
   );
 }
