@@ -8,6 +8,8 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
   const [medias, setMedias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState(null); // Estado para controlar resposta
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Função helper para traduzir tipo de mídia e verbo
   const getMediaInfo = (type) => {
@@ -86,6 +88,29 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
     fetchMedias(); // Recarregar feed após resposta
   };
 
+  const openModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setIsModalOpen(true);
+    document.body.style.overflow = "hidden"; // Lock scroll
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedImage(null);
+    document.body.style.overflow = "auto"; // Unlock scroll
+  };
+
+  // Close modal on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape" && isModalOpen) {
+        closeModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
+
   if (loading) return <p>Carregando...</p>;
 
   return (
@@ -152,7 +177,8 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                     alt="Mídia"
                     width={600}
                     height={450}
-                    className="w-full h-96 object-cover rounded"
+                    className="w-full h-96 object-cover rounded cursor-pointer"
+                    onClick={() => openModal(media.url)}
                   />
                 </div>
               )}
@@ -261,7 +287,8 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                           alt="Comentário"
                           width={200}
                           height={150}
-                          className="w-32 h-20 object-cover rounded"
+                          className="w-32 h-20 object-cover rounded cursor-pointer"
+                          onClick={() => openModal(reply.url)}
                         />
                       )}
                       {reply.type === "video" && (
@@ -288,6 +315,31 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Modal para imagem ampliada */}
+      {isModalOpen && selectedImage && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+          onClick={closeModal}
+        >
+          <div className="relative max-h-screen max-w-screen p-4">
+            <Image
+              src={selectedImage}
+              alt="Imagem ampliada"
+              width={1200}
+              height={900}
+              className="max-h-[90vh] max-w-full object-contain"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on image
+            />
+            <button
+              onClick={closeModal}
+              className="absolute top-2 right-2 text-white text-2xl bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-75"
+            >
+              ×
+            </button>
+          </div>
         </div>
       )}
     </div>
