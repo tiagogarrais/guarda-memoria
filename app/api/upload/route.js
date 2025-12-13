@@ -14,6 +14,15 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Configuração para aumentar limite de upload para 50MB
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
+
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
