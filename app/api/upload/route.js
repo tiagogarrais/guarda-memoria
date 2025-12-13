@@ -77,6 +77,11 @@ export async function POST(request) {
       parentId: parentId || null, // Adicionar ao objeto de dados
     };
 
+    // Gerar permalink único baseado em timestamp + caracteres aleatórios
+    const timestamp = Date.now();
+    const randomChars = Math.random().toString(36).substring(2, 8);
+    mediaData.permalink = `${timestamp}-${randomChars}`;
+
     // Se há texto, salvar como texto
     if (text) {
       mediaData.text = text;

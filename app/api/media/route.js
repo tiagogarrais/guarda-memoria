@@ -38,13 +38,37 @@ export async function GET(request) {
         { score: "desc" }, // Primeiro por pontuação (decrescente)
         { createdAt: "desc" }, // Depois por data (mais recentes primeiro)
       ],
-      include: {
+      select: {
+        id: true,
+        type: true,
+        text: true,
+        url: true,
+        publicId: true,
+        createdAt: true,
+        userId: true,
+        cityId: true,
+        stateId: true,
+        categories: true,
+        parentId: true,
+        permalink: true, // Adicionar permalink
         user: {
           select: { id: true, name: true, image: true },
         },
         replies: {
           // Novo: incluir respostas/comentários
-          include: {
+          select: {
+            id: true,
+            type: true,
+            text: true,
+            url: true,
+            publicId: true,
+            createdAt: true,
+            userId: true,
+            cityId: true,
+            stateId: true,
+            categories: true,
+            parentId: true,
+            permalink: true, // Adicionar permalink também para replies
             user: {
               select: { id: true, name: true, image: true },
             },

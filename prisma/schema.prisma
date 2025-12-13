@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model Account {
@@ -77,9 +78,10 @@ model VerificationToken {
 
 model Media {
   id        String   @id @default(cuid())
+  permalink String   @unique // Link permanente único baseado em timestamp
   publicId  String?  @unique // ID único do Cloudinary (opcional para texto)
   url       String?  // URL pública do arquivo (opcional para texto)
-  text      String?  // Texto da mensagem (opcional)
+  text      String?  @db.Text // Texto da mensagem (opcional) - usando TEXT para textos longos
   type      String   // "image", "video", "audio", "text"
   categories String? // JSON array com categorias: ["local", "pessoa", "historia"]
   userId    String   // Relaciona com o usuário
@@ -98,6 +100,7 @@ model Media {
   @@index([stateId, cityId])
   @@index([parentId]) // Novo índice para buscas eficientes
   @@index([score]) // Novo índice para ordenação por pontuação
+  @@index([permalink]) // Novo índice para links permanentes
 }
 
 model MediaKnowledge {

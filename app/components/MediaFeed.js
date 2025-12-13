@@ -85,6 +85,25 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
     }
   };
 
+  const handleDelete = async (mediaId) => {
+    if (window.confirm("Tem certeza que deseja apagar esta publicação?")) {
+      try {
+        const response = await fetch(`/api/media/${mediaId}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          // Recarregar o feed após deletar
+          fetchMedias();
+        } else {
+          alert("Erro ao apagar a publicação");
+        }
+      } catch (error) {
+        console.error("Erro ao deletar:", error);
+        alert("Erro ao apagar a publicação");
+      }
+    }
+  };
+
   const handleReplySuccess = () => {
     setReplyingTo(null);
     fetchMedias(); // Recarregar feed após resposta
@@ -102,21 +121,21 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
     document.body.style.overflow = "auto"; // Unlock scroll
   };
 
-  const handleDelete = async (mediaId) => {
-    if (window.confirm("Tem certeza que deseja apagar esta publicação?")) {
-      try {
-        const response = await fetch(`/api/media/${mediaId}`, {
-          method: "DELETE",
-        });
-        if (response.ok) {
-          fetchMedias(); // Recarregar feed após deletar
-        } else {
-          alert("Erro ao apagar a publicação");
-        }
-      } catch (error) {
-        console.error("Erro ao deletar:", error);
-        alert("Erro ao apagar a publicação");
-      }
+  const handleShare = async (permalink) => {
+    const url = `${window.location.origin}/api/permalink/${permalink}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      alert("Link copiado para a área de transferência!");
+    } catch (error) {
+      console.error("Erro ao copiar link:", error);
+      // Fallback para navegadores que não suportam clipboard API
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      alert("Link copiado para a área de transferência!");
     }
   };
 
@@ -207,7 +226,7 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                     alt="Mídia"
                     width={600}
                     height={450}
-                    className="w-full h-96 object-cover rounded cursor-pointer"
+                    className="w-full max-h-96 object-contain rounded cursor-pointer"
                     onClick={() => openModal(media.url)}
                   />
                 </div>
@@ -216,7 +235,10 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
               {/* Vídeo */}
               {media.type === "video" && (
                 <div className="mb-3">
-                  <video controls className="w-full h-96 object-cover rounded">
+                  <video
+                    controls
+                    className="w-full max-h-96 object-contain rounded"
+                  >
                     <source src={media.url} />
                   </video>
                 </div>
@@ -270,6 +292,30 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                     </span>
                   )}
                 </button>
+
+                {/* Botão Compartilhar */}
+                {media.permalink && (
+                  <button
+                    onClick={() => handleShare(media.permalink)}
+                    className="px-4 py-2 bg-purple-500 text-white text-sm font-medium rounded-lg hover:bg-purple-600 transition-colors duration-200 flex items-center space-x-2"
+                    title="Copiar link permanente"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                      />
+                    </svg>
+                    <span>Compartilhar</span>
+                  </button>
+                )}
 
                 {/* Botão para responder */}
                 <button
@@ -335,14 +381,14 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                           alt="Comentário"
                           width={200}
                           height={150}
-                          className="w-32 h-20 object-cover rounded cursor-pointer"
+                          className="w-32 max-h-32 object-contain rounded cursor-pointer"
                           onClick={() => openModal(reply.url)}
                         />
                       )}
                       {reply.type === "video" && (
                         <video
                           controls
-                          className="w-32 h-20 object-cover rounded"
+                          className="w-32 max-h-32 object-contain rounded"
                         >
                           <source src={reply.url} />
                         </video>

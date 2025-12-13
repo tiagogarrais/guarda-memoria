@@ -47,6 +47,7 @@ export default function UploadForm({
       "fotografia",
       "video",
       "poesia",
+      "livro",
     ],
     "📅 Tempo & Marcos": ["data"],
   };
@@ -73,6 +74,7 @@ export default function UploadForm({
     fotografia: "Fotografia",
     video: "Vídeo",
     poesia: "Poesia",
+    livro: "Livro",
     data: "Data",
   };
 
@@ -103,7 +105,12 @@ export default function UploadForm({
       // Validar tamanho do arquivo (50MB máximo)
       const maxSize = 50 * 1024 * 1024; // 50MB
       if (selectedFile.size > maxSize) {
-        setMessage(`Arquivo muito grande. Máximo permitido: 50MB. Tamanho atual: ${(selectedFile.size / (1024 * 1024)).toFixed(2)}MB`);
+        setMessage(
+          `Arquivo muito grande. Máximo permitido: 50MB. Tamanho atual: ${(
+            selectedFile.size /
+            (1024 * 1024)
+          ).toFixed(2)}MB`
+        );
         return;
       }
 
@@ -128,7 +135,12 @@ export default function UploadForm({
         // Validar tamanho do áudio (50MB máximo)
         const maxSize = 50 * 1024 * 1024; // 50MB
         if (blob.size > maxSize) {
-          setMessage(`Áudio muito grande. Máximo permitido: 50MB. Tamanho atual: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`);
+          setMessage(
+            `Áudio muito grande. Máximo permitido: 50MB. Tamanho atual: ${(
+              blob.size /
+              (1024 * 1024)
+            ).toFixed(2)}MB`
+          );
           return;
         }
 
@@ -261,6 +273,7 @@ export default function UploadForm({
               placeholder="Envie aqui seu comentário, poesia, música..."
               className="w-full p-3 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
               rows={3}
+              lang="pt-BR"
             />
           </div>
 
