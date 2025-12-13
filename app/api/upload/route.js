@@ -28,17 +28,17 @@ export async function POST(request) {
     const categories = formData.get("categories");
     const parentId = formData.get("parentId"); // Novo campo
 
-    // Validar tamanho do arquivo (50MB máximo)
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    // Validar tamanho do arquivo (250MB máximo para vídeos)
+    const maxSize = 250 * 1024 * 1024; // 250MB
     if (file && file.size > maxSize) {
       return NextResponse.json(
-        { error: "Arquivo muito grande. Máximo permitido: 50MB" },
+        { error: "Arquivo muito grande. Máximo permitido: 250MB" },
         { status: 413 }
       );
     }
     if (audio && audio.size > maxSize) {
       return NextResponse.json(
-        { error: "Áudio muito grande. Máximo permitido: 50MB" },
+        { error: "Áudio muito grande. Máximo permitido: 250MB" },
         { status: 413 }
       );
     }

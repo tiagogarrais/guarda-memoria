@@ -102,11 +102,11 @@ export default function UploadForm({
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      // Validar tamanho do arquivo (50MB máximo)
-      const maxSize = 50 * 1024 * 1024; // 50MB
+      // Validar tamanho do arquivo (250MB máximo)
+      const maxSize = 250 * 1024 * 1024; // 250MB
       if (selectedFile.size > maxSize) {
         setMessage(
-          `Arquivo muito grande. Máximo permitido: 50MB. Tamanho atual: ${(
+          `Arquivo muito grande. Máximo permitido: 250MB. Tamanho atual: ${(
             selectedFile.size /
             (1024 * 1024)
           ).toFixed(2)}MB`
@@ -132,11 +132,11 @@ export default function UploadForm({
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/wav" });
 
-        // Validar tamanho do áudio (50MB máximo)
-        const maxSize = 50 * 1024 * 1024; // 50MB
+        // Validar tamanho do áudio (250MB máximo)
+        const maxSize = 250 * 1024 * 1024; // 250MB
         if (blob.size > maxSize) {
           setMessage(
-            `Áudio muito grande. Máximo permitido: 50MB. Tamanho atual: ${(
+            `Áudio muito grande. Máximo permitido: 250MB. Tamanho atual: ${(
               blob.size /
               (1024 * 1024)
             ).toFixed(2)}MB`
