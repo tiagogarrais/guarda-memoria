@@ -14,6 +14,11 @@ export async function GET(request, { params }) {
         id: true,
         cityId: true,
         parentId: true,
+        city: {
+          select: {
+            slug: true,
+          },
+        },
       },
     });
 
@@ -25,8 +30,8 @@ export async function GET(request, { params }) {
     // Se é um comentário, redirecionar para o post pai
     const targetId = media.parentId || media.id;
 
-    // Redirecionar para a página da cidade com o ID da mídia
-    const redirectUrl = new URL(`/cidade/${media.cityId}`, request.url);
+    // Redirecionar para a página da cidade com o slug da cidade
+    const redirectUrl = new URL(`/cidade/${media.city.slug}`, request.url);
     redirectUrl.searchParams.set("media", targetId);
 
     return NextResponse.redirect(redirectUrl);

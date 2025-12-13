@@ -48,6 +48,7 @@ model City {
   stateId   Int
   state     State   @relation(fields: [stateId], references: [id])
   users     User[]  // Usuários que têm esta cidade como localização
+  favoriteUsers User[] @relation("UserFavoriteCities") // Usuários que têm esta cidade como favorita
   medias    Media[] // Mídias desta cidade
 
   @@index([stateId])
@@ -56,12 +57,14 @@ model City {
 model User {
   id            String    @id @default(cuid())
   name          String?
+  displayName   String?   // Nome personalizado para exibição no site
   email         String    @unique
   emailVerified DateTime?
   image         String?
   stateId       Int?      // ID do estado (ex: 11 para Rondônia)
   cityId        Int?      // ID da cidade (ex: 1100015)
   city          City?     @relation(fields: [cityId], references: [id])
+  favoriteCities City[]   @relation("UserFavoriteCities") // Cidades favoritas do usuário
   accounts      Account[]
   sessions      Session[]
   medias        Media[]

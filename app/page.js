@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
 import FeedSection from "./components/FeedSection";
+import Header from "./components/Header";
 
 const prisma = new PrismaClient();
 
@@ -11,12 +12,21 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
 
   let userCity = null;
+  let userData = null;
   if (session) {
     // Verificar se o usuário tem localização definida
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { stateId: true, cityId: true },
+      select: {
+        id: true,
+        name: true,
+        displayName: true,
+        stateId: true,
+        cityId: true,
+      },
     });
+
+    userData = user;
 
     if (!user?.stateId || !user?.cityId) {
       redirect("/select-location");
@@ -25,7 +35,12 @@ export default async function Home() {
     // Buscar nome da cidade
     const cityData = await prisma.city.findUnique({
       where: { id: user.cityId },
-      select: { id: true, name: true, state: { select: { sigla: true } } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        state: { select: { sigla: true } },
+      },
     });
 
     userCity = cityData;
@@ -35,41 +50,21 @@ export default async function Home() {
   if (session) {
     return (
       <main className="min-h-screen bg-gray-50">
-        {/* Header para usuários logados */}
-        <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center items-center py-4">
-              <h1 className="text-xl font-bold text-gray-900">
-                Guarda Memória
-              </h1>
-            </div>
-          </div>
-        </header>
+        <Header showUserInfo={true} session={session} user={userData} />
 
         {/* Seção de navegação */}
         <div className="bg-gray-50 border-b py-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-700">Olá, {session.user?.name}</span>
+            <div className="flex justify-center">
+              {userCity && (
                 <Link
-                  href="/api/auth/signout"
-                  className="bg-red-500 text-white px-3 py-1 text-sm rounded-lg hover:bg-red-600 transition-colors"
+                  href={`/cidade/${userCity.slug}`}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
                 >
-                  Sair
+                  Página de {userCity.name} -{" "}
+                  {userCity.state.sigla.toUpperCase()}
                 </Link>
-              </div>
-              <div className="flex items-center">
-                {userCity && (
-                  <Link
-                    href={`/cidade/${userCity.id}`}
-                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                  >
-                    Página de {userCity.name} -{" "}
-                    {userCity.state.sigla.toUpperCase()}
-                  </Link>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </div>

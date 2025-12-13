@@ -21,9 +21,20 @@ export default function LocationSelector({
 
   // Verificar se usuário já tem localização e redirecionar automaticamente
   useEffect(() => {
-    if (allowAutoRedirect && currentLocation?.cityId) {
-      router.push(`/cidade/${currentLocation.cityId}`);
-    }
+    const redirectToCity = async () => {
+      if (allowAutoRedirect && currentLocation?.cityId) {
+        try {
+          const response = await fetch(`/api/cities/${currentLocation.cityId}`);
+          if (response.ok) {
+            const cityData = await response.json();
+            router.push(`/cidade/${cityData.slug}`);
+          }
+        } catch (error) {
+          console.error("Error fetching city data:", error);
+        }
+      }
+    };
+    redirectToCity();
   }, [currentLocation, router, allowAutoRedirect]);
 
   useEffect(() => {
@@ -83,8 +94,20 @@ export default function LocationSelector({
       });
 
       if (response.ok) {
-        // Redirecionar diretamente para a página da cidade selecionada
-        router.push(`/cidade/${selectedCity}`);
+        // Buscar dados da cidade para obter o slug
+        try {
+          const cityResponse = await fetch(`/api/cities/${selectedCity}`);
+          if (cityResponse.ok) {
+            const cityData = await cityResponse.json();
+            router.push(`/cidade/${cityData.slug}`);
+          } else {
+            // Fallback para recarregar a página se não conseguir buscar o slug
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error("Error fetching city data:", error);
+          window.location.reload();
+        }
       } else {
         alert("Erro ao salvar localização");
       }

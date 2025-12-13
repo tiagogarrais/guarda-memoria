@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import Link from "next/link";
 import { Pacifico } from "next/font/google";
 import CityFeedSection from "../../components/CityFeedSection";
+import Header from "../../components/Header";
 
 const prisma = new PrismaClient();
 
@@ -16,12 +17,7 @@ const pacifico = Pacifico({
 
 export default async function CityPage({ params }) {
   const session = await getServerSession(authOptions);
-  const { cityId: cityIdParam } = await params;
-  const cityId = parseInt(cityIdParam);
-
-  if (isNaN(cityId)) {
-    return <div>ID da cidade inválido</div>;
-  }
+  const { citySlug } = await params;
 
   if (!session) {
     redirect("/api/auth/signin");
@@ -30,7 +26,13 @@ export default async function CityPage({ params }) {
   // Verificar se o usuário tem localização definida
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { stateId: true, cityId: true },
+    select: {
+      id: true,
+      name: true,
+      displayName: true,
+      stateId: true,
+      cityId: true,
+    },
   });
 
   if (!user?.stateId || !user?.cityId) {
@@ -39,8 +41,13 @@ export default async function CityPage({ params }) {
 
   // Buscar nome da cidade
   const cityData = await prisma.city.findUnique({
-    where: { id: cityId },
-    select: { id: true, name: true, state: { select: { sigla: true } } },
+    where: { slug: citySlug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      state: { select: { sigla: true } },
+    },
   });
 
   if (!cityData) {
@@ -49,17 +56,7 @@ export default async function CityPage({ params }) {
 
   return (
     <>
-      <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center py-4">
-            <Link href="/">
-              <h1 className="text-xl font-bold text-gray-900">
-                Guarda Memória
-              </h1>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header showUserInfo={true} session={session} user={user} />
 
       <main className="flex min-h-screen flex-col items-center p-6">
         <div className="z-10 max-w-5xl w-full font-mono text-sm mb-8">
@@ -71,16 +68,7 @@ export default async function CityPage({ params }) {
               {cityData.name} - {cityData.state.sigla.toUpperCase()}
             </h1>
           </div>
-          <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
-            <div className="flex items-center space-x-4">
-              <p>Olá, {session.user?.name}</p>
-              <Link
-                href="/api/auth/signout"
-                className="bg-red-500 text-white px-3 py-1 text-sm rounded"
-              >
-                Sair
-              </Link>
-            </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0">
             <div className="flex items-center">
               <Link
                 href="/"
@@ -94,7 +82,7 @@ export default async function CityPage({ params }) {
 
         <div className="w-full max-w-4xl">
           <CityFeedSection
-            cityId={cityId}
+            cityId={cityData.id}
             cityName={cityData.name}
             stateSigla={cityData.state.sigla}
           />
