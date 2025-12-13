@@ -4,6 +4,7 @@ import { authOptions } from "../../auth";
 import { PrismaClient } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
 import { updateMediaScore } from "../../../lib/mediaUtils";
+import { unstable_parseMultipartForm } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -14,15 +15,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Configuração para aumentar limite de upload para 50MB
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-};
-
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,7 +22,10 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
+    // Usar unstable_parseMultipartForm para uploads maiores
+    const formData = await unstable_parseMultipartForm(request, {
+      maxFileSize: 50 * 1024 * 1024, // 50MB
+    });
     const file = formData.get("file");
     const audio = formData.get("audio");
     const text = formData.get("text");
