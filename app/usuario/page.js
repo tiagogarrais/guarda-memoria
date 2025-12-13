@@ -7,6 +7,7 @@ import Header from "../components/Header";
 import Image from "next/image";
 import FavoriteCitiesSection from "../components/FavoriteCitiesSection";
 import DisplayNameForm from "../components/DisplayNameForm";
+import FeedSection from "../components/FeedSection";
 
 const prisma = new PrismaClient();
 
@@ -138,6 +139,21 @@ export default async function UserPage() {
 
           {/* Seção de cidades favoritas */}
           <FavoriteCitiesSection favoriteCities={user.favoriteCities} />
+
+          {/* Seção de memórias */}
+          <div className="bg-white shadow rounded-lg overflow-hidden mt-6">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Suas Memórias
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Compartilhe e veja suas memórias pessoais
+              </p>
+            </div>
+            <div className="px-6 py-4">
+              <FeedSection userCity={user.city} />
+            </div>
+          </div>
 
           {/* Botão voltar */}
           <div className="mt-8 text-center">

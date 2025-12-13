@@ -3,8 +3,6 @@ import { authOptions } from "@/app/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
-import FeedSection from "./components/FeedSection";
-import Header from "./components/Header";
 
 const prisma = new PrismaClient();
 
@@ -12,69 +10,32 @@ export default async function Home() {
   const session = await getServerSession(authOptions);
 
   let userCity = null;
-  let userData = null;
   if (session) {
     // Verificar se o usuário tem localização definida
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: {
         id: true,
-        name: true,
-        displayName: true,
         stateId: true,
         cityId: true,
       },
     });
 
-    userData = user;
-
     if (!user?.stateId || !user?.cityId) {
       redirect("/select-location");
     }
 
-    // Buscar nome da cidade
+    // Buscar slug da cidade
     const cityData = await prisma.city.findUnique({
       where: { id: user.cityId },
       select: {
-        id: true,
-        name: true,
         slug: true,
-        state: { select: { sigla: true } },
       },
     });
 
-    userCity = cityData;
-  }
-
-  // Se usuário está logado, mostrar dashboard
-  if (session) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <Header showUserInfo={true} session={session} user={userData} />
-
-        {/* Seção de navegação */}
-        <div className="bg-gray-50 border-b py-4">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center">
-              {userCity && (
-                <Link
-                  href={`/cidade/${userCity.slug}`}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  Página de {userCity.name} -{" "}
-                  {userCity.state.sigla.toUpperCase()}
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Feed do usuário logado */}
-        <div className="max-w-4xl mx-auto py-8">
-          {session && <FeedSection userCity={userCity} />}
-        </div>
-      </main>
-    );
+    if (cityData) {
+      redirect(`/cidade/${cityData.slug}`);
+    }
   }
 
   // Landing page para usuários não logados
