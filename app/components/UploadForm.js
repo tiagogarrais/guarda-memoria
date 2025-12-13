@@ -100,6 +100,13 @@ export default function UploadForm({
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
+      // Validar tamanho do arquivo (50MB máximo)
+      const maxSize = 50 * 1024 * 1024; // 50MB
+      if (selectedFile.size > maxSize) {
+        setMessage(`Arquivo muito grande. Máximo permitido: 50MB. Tamanho atual: ${(selectedFile.size / (1024 * 1024)).toFixed(2)}MB`);
+        return;
+      }
+
       setFile(selectedFile);
       setAudioBlob(null); // Limpar áudio se arquivo foi selecionado
     }
@@ -117,6 +124,14 @@ export default function UploadForm({
 
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+
+        // Validar tamanho do áudio (50MB máximo)
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (blob.size > maxSize) {
+          setMessage(`Áudio muito grande. Máximo permitido: 50MB. Tamanho atual: ${(blob.size / (1024 * 1024)).toFixed(2)}MB`);
+          return;
+        }
+
         setAudioBlob(blob);
         setFile(null); // Limpar arquivo se áudio foi gravado
         // Parar todas as tracks do stream

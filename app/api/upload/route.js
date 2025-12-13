@@ -4,7 +4,6 @@ import { authOptions } from "../../auth";
 import { PrismaClient } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
 import { updateMediaScore } from "../../../lib/mediaUtils";
-import { unstable_parseMultipartForm } from "next/server";
 
 const prisma = new PrismaClient();
 
@@ -22,15 +21,27 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Usar unstable_parseMultipartForm para uploads maiores
-    const formData = await unstable_parseMultipartForm(request, {
-      maxFileSize: 50 * 1024 * 1024, // 50MB
-    });
+    const formData = await request.formData();
     const file = formData.get("file");
     const audio = formData.get("audio");
     const text = formData.get("text");
     const categories = formData.get("categories");
     const parentId = formData.get("parentId"); // Novo campo
+
+    // Validar tamanho do arquivo (50MB máximo)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file && file.size > maxSize) {
+      return NextResponse.json(
+        { error: "Arquivo muito grande. Máximo permitido: 50MB" },
+        { status: 413 }
+      );
+    }
+    if (audio && audio.size > maxSize) {
+      return NextResponse.json(
+        { error: "Áudio muito grande. Máximo permitido: 50MB" },
+        { status: 413 }
+      );
+    }
 
     // Verificar se pelo menos um dos campos foi fornecido
     if (!file && !audio && !text) {
