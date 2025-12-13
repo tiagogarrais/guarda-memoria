@@ -58,34 +58,37 @@ export default async function CityPage({ params }) {
     <>
       <Header showUserInfo={true} session={session} user={user} />
 
-      <main className="flex min-h-screen flex-col items-center p-6">
-        <div className="z-10 max-w-5xl w-full font-mono text-sm mb-8">
-          <div className="text-center mb-6">
-            <h1 className={`text-3xl font-bold ${pacifico.className}`}>
+      <main className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          {/* Header da Cidade */}
+          <div className="text-center mb-8">
+            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 ${pacifico.className}`}>
               Memórias de
             </h1>
-            <h1 className={`text-3xl ${pacifico.className}`}>
+            <h1 className={`text-2xl sm:text-3xl lg:text-4xl text-gray-700 ${pacifico.className}`}>
               {cityData.name} - {cityData.state.sigla.toUpperCase()}
             </h1>
-          </div>
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0">
-            <div className="flex items-center">
+            <div className="mt-6">
               <Link
                 href="/"
-                className="bg-blue-500 text-white px-4 py-2 rounded"
+                className="inline-flex items-center px-4 py-2 bg-blue-500 text-white text-sm sm:text-base rounded-lg hover:bg-blue-600 transition-colors"
               >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
                 Minhas memórias
               </Link>
             </div>
           </div>
-        </div>
 
-        <div className="w-full max-w-4xl">
-          <CityFeedSection
-            cityId={cityData.id}
-            cityName={cityData.name}
-            stateSigla={cityData.state.sigla}
-          />
+          {/* Feed da Cidade */}
+          <div className="max-w-4xl mx-auto">
+            <CityFeedSection
+              cityId={cityData.id}
+              cityName={cityData.name}
+              stateSigla={cityData.state.sigla}
+            />
+          </div>
         </div>
       </main>
     </>
