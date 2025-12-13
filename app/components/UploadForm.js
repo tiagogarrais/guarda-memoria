@@ -244,54 +244,14 @@ export default function UploadForm({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Compartilhe sua memória..."
-              className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
+              className="w-full p-3 border border-gray-300 rounded-lg resize-y focus:ring-2 focus:ring-blue-500 focus:border-transparent min-h-[80px]"
               rows={3}
             />
-
-            {/* Botões de ação */}
-            <div className="absolute bottom-2 right-2 flex space-x-2">
-              {/* Botão de áudio */}
-              <button
-                type="button"
-                onClick={isRecording ? stopRecording : startRecording}
-                className={`p-2 rounded-full transition-colors ${
-                  isRecording
-                    ? "text-red-500 hover:text-red-600 bg-red-50"
-                    : "text-gray-500 hover:text-blue-500 hover:bg-gray-100"
-                }`}
-                title={isRecording ? "Parar gravação" : "Gravar áudio"}
-              >
-                {isRecording ? (
-                  <svg
-                    className="w-5 h-5"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <rect x="6" y="4" width="4" height="16" rx="1" />
-                    <rect x="14" y="4" width="4" height="16" rx="1" />
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                    />
-                  </svg>
-                )}
-              </button>
-            </div>
           </div>
 
           {/* Menu de opções de anexo */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <button
                 type="button"
                 onClick={() => handleFileSelect("photo")}
@@ -352,8 +312,95 @@ export default function UploadForm({
                 </svg>
                 <span className="text-sm">Música</span>
               </button>
+              <button
+                type="button"
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`flex flex-col items-center p-3 rounded-lg transition-colors ${
+                  isRecording
+                    ? "text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100"
+                    : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                }`}
+                title={isRecording ? "Parar gravação" : "Gravar áudio"}
+              >
+                {isRecording ? (
+                  <svg
+                    className="w-6 h-6 mb-1"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-6 h-6 mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                )}
+                <span className="text-sm">
+                  {isRecording ? "Parar" : "Áudio"}
+                </span>
+              </button>
             </div>
           </div>
+
+          {/* Botão de enviar */}
+          <button
+            type="submit"
+            disabled={uploading || (!text.trim() && !file && !audioBlob)}
+            className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
+          >
+            {uploading ? (
+              <>
+                <svg
+                  className="animate-spin w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>Enviando...</span>
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
+                <span>Enviar</span>
+              </>
+            )}
+          </button>
 
           {/* Categorias da publicação */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -519,57 +566,6 @@ export default function UploadForm({
               </div>
             </div>
           )}
-
-          {/* Botão de enviar */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={uploading || (!text.trim() && !file && !audioBlob)}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-            >
-              {uploading ? (
-                <>
-                  <svg
-                    className="animate-spin w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  <span>Enviando...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                    />
-                  </svg>
-                  <span>Enviar</span>
-                </>
-              )}
-            </button>
-          </div>
         </form>
 
         {/* Input file oculto */}

@@ -193,7 +193,7 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
               {/* Mensagem de texto - sempre mostrar se existir */}
               {media.text && (
                 <div className="mb-3">
-                  <p className="text-gray-800 text-base leading-relaxed">
+                  <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap">
                     {media.text}
                   </p>
                 </div>
@@ -305,7 +305,10 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
               {/* Exibir comentários/respostas */}
               {media.replies && media.replies.length > 0 && (
                 <div className="mt-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold">Comentários:</h4>
+                  <h4 className="text-sm font-semibold">
+                    Você tem outra mídia desta memória? Entre na conversa e
+                    compartilhe com a gente!
+                  </h4>
                   {media.replies.map((reply) => (
                     <div
                       key={reply.id}
@@ -322,7 +325,9 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                           </button>
                         )}
                       {reply.text && (
-                        <p className="text-sm mb-1">{reply.text}</p>
+                        <p className="text-sm mb-1 whitespace-pre-wrap">
+                          {reply.text}
+                        </p>
                       )}
                       {reply.type === "image" && reply.url && (
                         <Image
