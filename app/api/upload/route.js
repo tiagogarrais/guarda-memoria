@@ -4,15 +4,34 @@ import { authOptions } from "../../auth";
 import { PrismaClient } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
 import { updateMediaScore } from "../../../lib/mediaUtils";
+import { Readable } from "stream"; // Importar stream
 
 const prisma = new PrismaClient();
 
-// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+// Função auxiliar para upload via Stream (evita estouro de memória)
+const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        resource_type: resourceType,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    // Transforma o buffer em stream e envia
+    const stream = Readable.from(buffer);
+    stream.pipe(uploadStream);
+  });
+};
 
 export async function POST(request) {
   try {
@@ -26,46 +45,28 @@ export async function POST(request) {
     const audio = formData.get("audio");
     const text = formData.get("text");
     const categories = formData.get("categories");
-    const parentId = formData.get("parentId"); // Novo campo
+    const parentId = formData.get("parentId");
 
-    // Validar tamanho do arquivo (250MB máximo para vídeos)
-    const maxSize = 250 * 1024 * 1024; // 250MB
+    // Validar tamanho (250MB)
+    const maxSize = 250 * 1024 * 1024;
     if (file && file.size > maxSize) {
-      return NextResponse.json(
-        { error: "Arquivo muito grande. Máximo permitido: 250MB" },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: "Arquivo muito grande (Max 250MB)" }, { status: 413 });
     }
     if (audio && audio.size > maxSize) {
-      return NextResponse.json(
-        { error: "Áudio muito grande. Máximo permitido: 250MB" },
-        { status: 413 }
-      );
+      return NextResponse.json({ error: "Áudio muito grande (Max 250MB)" }, { status: 413 });
     }
 
-    // Verificar se pelo menos um dos campos foi fornecido
     if (!file && !audio && !text) {
-      return NextResponse.json(
-        { error: "No content provided" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No content provided" }, { status: 400 });
     }
 
-    // Get user with location
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: { id: true, stateId: true, cityId: true },
     });
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    if (!user.stateId || !user.cityId) {
-      return NextResponse.json(
-        { error: "User location not set" },
-        { status: 400 }
-      );
+    if (!user || !user.stateId || !user.cityId) {
+      return NextResponse.json({ error: "User location missing" }, { status: 400 });
     }
 
     let mediaData = {
@@ -74,73 +75,47 @@ export async function POST(request) {
       stateId: user.stateId,
       cityId: user.cityId,
       categories: categories || null,
-      parentId: parentId || null, // Adicionar ao objeto de dados
+      parentId: parentId || null,
+      permalink: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
     };
 
-    // Gerar permalink único baseado em timestamp + caracteres aleatórios
-    const timestamp = Date.now();
-    const randomChars = Math.random().toString(36).substring(2, 8);
-    mediaData.permalink = `${timestamp}-${randomChars}`;
-
-    // Se há texto, salvar como texto
     if (text) {
       mediaData.text = text;
       mediaData.type = "text";
     }
 
-    // Se há arquivo (foto/vídeo)
+    // LÓGICA DE UPLOAD OTIMIZADA
     if (file) {
-      // Convert file to buffer
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-
-      // Upload to Cloudinary
-      const result = await cloudinary.uploader.upload(
-        `data:${file.type};base64,${buffer.toString("base64")}`,
-        {
-          resource_type: "auto",
-          folder: "guarda-memoria",
-        }
-      );
+      
+      // Usa a função auxiliar com stream
+      const result = await uploadToCloudinary(buffer, "guarda-memoria", "auto");
 
       mediaData.publicId = result.public_id;
       mediaData.url = result.secure_url;
       mediaData.type = result.resource_type === "image" ? "image" : "video";
     }
 
-    // Se há áudio
     if (audio) {
-      // Convert audio blob to buffer
       const bytes = await audio.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Upload to Cloudinary
-      const result = await cloudinary.uploader.upload(
-        `data:audio/wav;base64,${buffer.toString("base64")}`,
-        {
-          resource_type: "video", // Cloudinary trata áudio como vídeo
-          folder: "guarda-memoria",
-        }
-      );
+      // Audio no Cloudinary geralmente usa resource_type: "video"
+      const result = await uploadToCloudinary(buffer, "guarda-memoria", "video");
 
       mediaData.publicId = result.public_id;
       mediaData.url = result.secure_url;
       mediaData.type = "audio";
     }
 
-    // Save to database
     const media = await prisma.media.create({
       data: mediaData,
     });
 
-    // Se é um comentário, atualizar a pontuação da mídia pai
     if (parentId) {
-      try {
-        await updateMediaScore(parentId);
-      } catch (error) {
-        console.error("Erro ao atualizar pontuação da mídia pai:", error);
-        // Não falhar a requisição por causa disso
-      }
+      // Executa sem await para não travar a resposta
+      updateMediaScore(parentId).catch(console.error);
     }
 
     return NextResponse.json({
@@ -154,6 +129,6 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    return NextResponse.json({ error: "Upload failed: " + error.message }, { status: 500 });
   }
 }
