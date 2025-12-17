@@ -2,36 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth";
 import { PrismaClient } from "@prisma/client";
-import { v2 as cloudinary } from "cloudinary";
 import { updateMediaScore } from "../../../lib/mediaUtils";
-import { Readable } from "stream"; // Importar stream
 
 const prisma = new PrismaClient();
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Função auxiliar para upload via Stream (evita estouro de memória)
-const uploadToCloudinary = (buffer, folder, resourceType = "auto") => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        resource_type: resourceType,
-      },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      }
-    );
-    // Transforma o buffer em stream e envia
-    const stream = Readable.from(buffer);
-    stream.pipe(uploadStream);
-  });
-};
 
 export async function POST(request) {
   try {
@@ -40,24 +13,23 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const audio = formData.get("audio");
-    const text = formData.get("text");
-    const categories = formData.get("categories");
-    const parentId = formData.get("parentId");
+    const body = await request.json();
+    const { text, categories, parentId, publicId, url, resourceType } = body;
 
-    // Validar tamanho (250MB)
-    const maxSize = 250 * 1024 * 1024;
-    if (file && file.size > maxSize) {
-      return NextResponse.json({ error: "Arquivo muito grande (Max 250MB)" }, { status: 413 });
-    }
-    if (audio && audio.size > maxSize) {
-      return NextResponse.json({ error: "Áudio muito grande (Max 250MB)" }, { status: 413 });
-    }
+    console.log("Upload request body:", {
+      text: !!text,
+      categories,
+      parentId,
+      publicId,
+      url,
+      resourceType,
+    });
 
-    if (!file && !audio && !text) {
-      return NextResponse.json({ error: "No content provided" }, { status: 400 });
+    if (!text && !publicId) {
+      return NextResponse.json(
+        { error: "No content provided" },
+        { status: 400 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -66,7 +38,10 @@ export async function POST(request) {
     });
 
     if (!user || !user.stateId || !user.cityId) {
-      return NextResponse.json({ error: "User location missing" }, { status: 400 });
+      return NextResponse.json(
+        { error: "User location missing" },
+        { status: 400 }
+      );
     }
 
     let mediaData = {
@@ -76,7 +51,7 @@ export async function POST(request) {
       cityId: user.cityId,
       categories: categories || null,
       parentId: parentId || null,
-      permalink: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`
+      permalink: `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
     };
 
     if (text) {
@@ -84,34 +59,31 @@ export async function POST(request) {
       mediaData.type = "text";
     }
 
-    // LÓGICA DE UPLOAD OTIMIZADA
-    if (file) {
-      const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      
-      // Usa a função auxiliar com stream
-      const result = await uploadToCloudinary(buffer, "guarda-memoria", "auto");
-
-      mediaData.publicId = result.public_id;
-      mediaData.url = result.secure_url;
-      mediaData.type = result.resource_type === "image" ? "image" : "video";
+    // Se há dados do Cloudinary, usar eles
+    if (publicId && url && resourceType) {
+      mediaData.publicId = publicId;
+      mediaData.url = url;
+      mediaData.type =
+        resourceType === "image"
+          ? "image"
+          : resourceType === "video"
+          ? "video"
+          : "audio";
+      console.log("Using Cloudinary data:", {
+        publicId,
+        url,
+        resourceType,
+        finalType: mediaData.type,
+      });
     }
 
-    if (audio) {
-      const bytes = await audio.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-
-      // Audio no Cloudinary geralmente usa resource_type: "video"
-      const result = await uploadToCloudinary(buffer, "guarda-memoria", "video");
-
-      mediaData.publicId = result.public_id;
-      mediaData.url = result.secure_url;
-      mediaData.type = "audio";
-    }
+    console.log("Creating media with data:", mediaData);
 
     const media = await prisma.media.create({
       data: mediaData,
     });
+
+    console.log("Media created successfully:", media.id);
 
     if (parentId) {
       // Executa sem await para não travar a resposta
@@ -129,6 +101,9 @@ export async function POST(request) {
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "Upload failed: " + error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Upload failed: " + error.message },
+      { status: 500 }
+    );
   }
 }

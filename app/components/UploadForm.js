@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { CldUploadWidget } from "next-cloudinary";
 
 export default function UploadForm({
   onUploadSuccess,
@@ -9,14 +10,13 @@ export default function UploadForm({
   parentId = null,
 }) {
   const [text, setText] = useState("");
-  const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlob, setAudioBlob] = useState(null);
+  const [cloudinaryResult, setCloudinaryResult] = useState(null);
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-  const fileInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const router = useRouter();
@@ -78,47 +78,6 @@ export default function UploadForm({
     data: "Data",
   };
 
-  const handleFileSelect = (type) => {
-    if (fileInputRef.current) {
-      let acceptType = "";
-      switch (type) {
-        case "photo":
-          acceptType = "image/*";
-          break;
-        case "video":
-          acceptType = "video/*";
-          break;
-        case "music":
-          acceptType = "audio/*";
-          break;
-        default:
-          acceptType = "image/*,video/*,audio/*";
-      }
-      fileInputRef.current.accept = acceptType;
-      fileInputRef.current.click();
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      // Validar tamanho do arquivo (250MB máximo)
-      const maxSize = 250 * 1024 * 1024; // 250MB
-      if (selectedFile.size > maxSize) {
-        setMessage(
-          `Arquivo muito grande. Máximo permitido: 250MB. Tamanho atual: ${(
-            selectedFile.size /
-            (1024 * 1024)
-          ).toFixed(2)}MB`
-        );
-        return;
-      }
-
-      setFile(selectedFile);
-      setAudioBlob(null); // Limpar áudio se arquivo foi selecionado
-    }
-  };
-
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -169,7 +128,7 @@ export default function UploadForm({
     e.preventDefault();
 
     // Verificar se há pelo menos texto ou mídia
-    if (!text.trim() && !file && !audioBlob) {
+    if (!text.trim() && !cloudinaryResult) {
       setMessage("Adicione uma mensagem ou mídia");
       return;
     }
@@ -177,19 +136,30 @@ export default function UploadForm({
     setUploading(true);
     setMessage("");
 
-    const formData = new FormData();
-    if (text.trim()) formData.append("text", text.trim());
-    if (file) formData.append("file", file);
-    if (audioBlob) formData.append("audio", audioBlob);
-    if (selectedCategories.length > 0) {
-      formData.append("categories", JSON.stringify(selectedCategories));
-    }
-    if (parentId) formData.append("parentId", parentId); // Novo campo para comentários
-
     try {
+      // Preparar dados para enviar à API
+      const uploadData = {
+        text: text.trim() || null,
+        categories:
+          selectedCategories.length > 0
+            ? JSON.stringify(selectedCategories)
+            : null,
+        parentId: parentId || null,
+      };
+
+      // Se há resultado do Cloudinary, adicionar os dados
+      if (cloudinaryResult) {
+        uploadData.publicId = cloudinaryResult.public_id;
+        uploadData.url = cloudinaryResult.secure_url;
+        uploadData.resourceType = cloudinaryResult.resource_type;
+      }
+
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(uploadData),
       });
 
       const result = await response.json();
@@ -197,10 +167,12 @@ export default function UploadForm({
       if (response.ok) {
         setMessage("Enviado com sucesso!");
         setText("");
-        setFile(null);
-        setAudioBlob(null);
+        setCloudinaryResult(null);
         setSelectedCategories([]);
-        setTimeout(() => setMessage(""), 3000);
+        setTimeout(() => {
+          setMessage("");
+          window.location.reload(); // Refresh da página após sucesso
+        }, 1000); // Reduzido para 1 segundo para dar tempo de ver a mensagem
         if (onUploadSuccess) onUploadSuccess();
       } else {
         setMessage(result.error || "Erro no envio");
@@ -213,8 +185,7 @@ export default function UploadForm({
   };
 
   const removeAttachment = () => {
-    setFile(null);
-    setAudioBlob(null);
+    setCloudinaryResult(null);
   };
 
   const handleCategoryChange = (category) => {
@@ -223,6 +194,31 @@ export default function UploadForm({
         ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
+  };
+
+  // Callbacks para o upload do Cloudinary
+  const handleUploadSuccess = (result) => {
+    console.log("Upload success:", result);
+    if (result && result.info) {
+      setCloudinaryResult({
+        public_id: result.info.public_id,
+        secure_url: result.info.secure_url,
+        resource_type: result.info.resource_type,
+      });
+      setMessage("Arquivo enviado com sucesso!");
+      setTimeout(() => setMessage(""), 3000);
+    }
+  };
+
+  const handleUploadError = (error) => {
+    console.error("Upload error:", error);
+    let errorMessage = "Erro no upload";
+    if (error && error.message) {
+      errorMessage += ": " + error.message;
+    } else if (error && typeof error === "string") {
+      errorMessage += ": " + error;
+    }
+    setMessage(errorMessage);
   };
 
   return (
@@ -280,66 +276,136 @@ export default function UploadForm({
           {/* Menu de opções de anexo */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <button
-                type="button"
-                onClick={() => handleFileSelect("photo")}
-                className="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              <CldUploadWidget
+                options={{
+                  maxFiles: 10,
+                  resourceType: "image",
+                  folder: "guarda-memoria",
+                  maxFileSize: 250 * 1024 * 1024, // 250MB
+                  clientAllowedFormats: ["png", "jpg", "jpeg", "gif", "webp"],
+                  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+                  apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+                  uploadPreset: "ml_default",
+                }}
+                onSuccess={handleUploadSuccess}
+                onError={handleUploadError}
               >
-                <svg
-                  className="w-6 h-6 mb-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span className="text-sm">Foto</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFileSelect("video")}
-                className="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                {({ open }) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <svg
+                      className="w-6 h-6 mb-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-sm">Foto</span>
+                  </button>
+                )}
+              </CldUploadWidget>
+
+              <CldUploadWidget
+                options={{
+                  maxFiles: 10,
+                  resourceType: "video",
+                  folder: "guarda-memoria",
+                  maxFileSize: 250 * 1024 * 1024, // 250MB
+                  clientAllowedFormats: [
+                    "mp4",
+                    "avi",
+                    "mov",
+                    "wmv",
+                    "flv",
+                    "webm",
+                    "mkv",
+                  ],
+                  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+                  apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+                  uploadPreset: "ml_default",
+                }}
+                onSuccess={handleUploadSuccess}
+                onError={handleUploadError}
               >
-                <svg
-                  className="w-6 h-6 mb-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                  />
-                </svg>
-                <span className="text-sm">Vídeo</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleFileSelect("music")}
-                className="flex flex-col items-center p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                {({ open }) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="flex flex-col items-center p-3 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  >
+                    <svg
+                      className="w-6 h-6 mb-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span className="text-sm">Vídeo</span>
+                  </button>
+                )}
+              </CldUploadWidget>
+
+              <CldUploadWidget
+                options={{
+                  maxFiles: 10,
+                  resourceType: "video", // Cloudinary trata audio como video
+                  folder: "guarda-memoria",
+                  maxFileSize: 250 * 1024 * 1024, // 250MB
+                  clientAllowedFormats: [
+                    "mp3",
+                    "wav",
+                    "aac",
+                    "ogg",
+                    "wma",
+                    "flac",
+                    "m4a",
+                  ],
+                  cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+                  apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+                  uploadPreset: "ml_default",
+                }}
+                onSuccess={handleUploadSuccess}
+                onError={handleUploadError}
               >
-                <svg
-                  className="w-6 h-6 mb-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                  />
-                </svg>
-                <span className="text-sm">Música</span>
-              </button>
+                {({ open }) => (
+                  <button
+                    type="button"
+                    onClick={open}
+                    className="flex flex-col items-center p-3 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                  >
+                    <svg
+                      className="w-6 h-6 mb-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                      />
+                    </svg>
+                    <span className="text-sm">Música</span>
+                  </button>
+                )}
+              </CldUploadWidget>
+
               <button
                 type="button"
                 onClick={isRecording ? stopRecording : startRecording}
@@ -382,11 +448,11 @@ export default function UploadForm({
           </div>
 
           {/* Preview do anexo */}
-          {(file || audioBlob) && (
+          {cloudinaryResult && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  {file && file.type.startsWith("image/") && (
+                  {cloudinaryResult.resource_type === "image" && (
                     <div className="flex items-center space-x-2">
                       <svg
                         className="w-5 h-5 text-green-500"
@@ -402,11 +468,12 @@ export default function UploadForm({
                         />
                       </svg>
                       <span className="text-sm text-gray-700">
-                        Foto: {file.name}
+                        A foto está pronta para ser enviada. Que tal escrever um
+                        comentário falando mais sobre ela?
                       </span>
                     </div>
                   )}
-                  {file && file.type.startsWith("video/") && (
+                  {cloudinaryResult.resource_type === "video" && (
                     <div className="flex items-center space-x-2">
                       <svg
                         className="w-5 h-5 text-blue-500"
@@ -422,7 +489,8 @@ export default function UploadForm({
                         />
                       </svg>
                       <span className="text-sm text-gray-700">
-                        Vídeo: {file.name}
+                        O vídeo está pronto para ser enviado. Que tal escrever
+                        um comentário contando a história por trás dele?
                       </span>
                     </div>
                   )}
@@ -442,7 +510,8 @@ export default function UploadForm({
                         />
                       </svg>
                       <span className="text-sm text-gray-700">
-                        Áudio gravado
+                        O áudio está pronto para ser enviado. Que tal escrever
+                        um comentário explicando o que ele representa?
                       </span>
                     </div>
                   )}
@@ -474,7 +543,9 @@ export default function UploadForm({
           {/* Botão de enviar */}
           <button
             type="submit"
-            disabled={uploading || (!text.trim() && !file && !audioBlob)}
+            disabled={
+              uploading || (!text.trim() && !cloudinaryResult && !audioBlob)
+            }
             className="w-full bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
           >
             {uploading ? (
@@ -595,14 +666,6 @@ export default function UploadForm({
             )}
           </div>
         </form>
-
-        {/* Input file oculto */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          onChange={handleFileChange}
-          className="hidden"
-        />
 
         {/* Mensagem de status */}
         {message && (

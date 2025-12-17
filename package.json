@@ -17,6 +17,7 @@
     "mysql2": "3.9.8",
     "next": "^15.5.7",
     "next-auth": "^4.24.13",
+    "next-cloudinary": "^6.17.5",
     "prisma": "5.15.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
