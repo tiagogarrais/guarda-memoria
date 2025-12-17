@@ -168,9 +168,7 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
                 <h3 className="text-lg font-bold text-gray-800 mb-2 text-center">
                   {media.permalink ? (
                     <a
-                      href={`/api/permalink/${media.permalink}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={`/postagem/${media.permalink}`}
                       className="text-blue-600 hover:text-blue-800 hover:underline"
                       title="Link permanente para esta publicação"
                     >

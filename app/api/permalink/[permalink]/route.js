@@ -30,9 +30,21 @@ export async function GET(request, { params }) {
     // Se é um comentário, redirecionar para o post pai
     const targetId = media.parentId || media.id;
 
-    // Redirecionar para a página da cidade com o slug da cidade
-    const redirectUrl = new URL(`/cidade/${media.city.slug}`, request.url);
-    redirectUrl.searchParams.set("media", targetId);
+    // Buscar o permalink do post alvo (pai ou próprio)
+    const targetMedia = await prisma.media.findUnique({
+      where: { id: targetId },
+      select: { permalink: true },
+    });
+
+    if (!targetMedia) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    // Redirecionar para a página da postagem específica
+    const redirectUrl = new URL(
+      `/postagem/${targetMedia.permalink}`,
+      request.url
+    );
 
     return NextResponse.redirect(redirectUrl);
   } catch (error) {
