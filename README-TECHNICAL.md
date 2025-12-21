@@ -71,9 +71,11 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  displayName   String?   // Nome personalizado para exibição no site
   stateId       Int?      // Estado selecionado
   cityId        Int?      // Cidade selecionada
   city          City?     @relation(fields: [cityId], references: [id])
+  favoriteCities City[]   @relation("UserFavoriteCities") // Cidades favoritas do usuário
   accounts      Account[]
   sessions      Session[]
   medias        Media[]   // Mídias criadas
@@ -95,6 +97,7 @@ model Media {
   stateId   Int      // Estado
   cityId    Int      // Cidade
   score     Int      @default(0) // Pontuação calculada
+  permalink String   @unique // Link permanente único baseado em timestamp
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
   parentId  String?  // ID da mídia pai (comentários)
@@ -192,6 +195,86 @@ Pontuação = Número de Comentários + Número de "Eu Conheço"
 - `categories`: JSON array de categorias
 - `parentId`: ID da mídia pai (para comentários)
 
+## �️ Sistema de QR Codes
+
+### **Funcionalidade**
+
+O sistema de QR codes permite gerar cartões impressos para cada postagem, facilitando o compartilhamento físico das memórias culturais.
+
+### **Implementação**
+
+- **Biblioteca**: `react-qr-code` para geração client-side
+- **Rota**: `/postagem/[permalink]/qr` - Página dedicada para impressão
+- **Conteúdo**: Título, autor, data, descrição e QR code
+- **Design**: Layout monocromático otimizado para impressão laser
+
+### **Estrutura da Página QR**
+
+```javascript
+// app/postagem/[permalink]/qr/page.js
+- Busca postagem pelo permalink
+- Renderiza layout de impressão
+- QR code aponta para URL da postagem
+```
+
+## 🔗 Sistema de Permalinks
+
+### **Funcionalidade**
+
+O sistema de permalinks permite acesso direto às postagens através de URLs permanentes e amigáveis.
+
+### **Implementação**
+
+- **Geração**: Timestamp + string aleatória (ex: `1766276840497-3yusj6`)
+- **Unicidade**: Campo único no banco de dados
+- **Indexação**: Índice otimizado para buscas rápidas
+- **Redirecionamento**: API `/api/permalink/[permalink]` para compatibilidade
+
+### **Estrutura das URLs**
+
+- **Postagens**: `/postagem/{permalink}`
+- **QR Codes**: `/postagem/{permalink}/qr`
+- **API de redirecionamento**: `/api/permalink/{permalink}`
+
+## 👤 Sistema de Nomes de Exibição
+
+### **Funcionalidade**
+
+Os usuários podem personalizar como seu nome aparece no site através do displayName.
+
+### **Implementação**
+
+- **Campo opcional**: `displayName` no modelo User
+- **Priorização**: displayName > name (Google) > "Usuário"
+- **Página de perfil**: `/usuario` para edição
+- **API**: `/api/user/update-display-name` para atualização
+- **Utilitário**: `lib/userUtils.js` para lógica de exibição
+
+### **Validação**
+
+- Máximo 50 caracteres
+- Campo opcional (pode ser vazio)
+
+## 🌟 Sistema de Cidades Favoritas
+
+### **Funcionalidade**
+
+Os usuários podem marcar cidades como favoritas para acesso rápido e personalização.
+
+### **Implementação**
+
+- **Relação many-to-many**: User ↔ City via tabela `_UserFavoriteCities`
+- **Página de perfil**: `/usuario` para gerenciamento
+- **APIs**:
+  - `POST /api/user/add-favorite-city` - Adicionar favorita
+  - `POST /api/user/remove-favorite-city` - Remover favorita
+- **Componente**: `FavoriteCitiesSection` para exibição e gerenciamento
+
+### **Limitações**
+
+- Sem limite de cidades favoritas
+- Uma cidade pode ser favorita de múltiplos usuários
+
 ## 🔧 Scripts e Utilitários
 
 ### **Scripts do Package.json**
@@ -242,7 +325,8 @@ Pontuação = Número de Comentários + Número de "Eu Conheço"
   "prisma": "^5.15.0",
   "next-auth": "^4.24.7",
   "tailwindcss": "^3.4.1",
-  "cloudinary": "^2.2.0"
+  "cloudinary": "^2.2.0",
+  "react-qr-code": "^2.0.18"
 }
 ```
 
@@ -264,6 +348,7 @@ Pontuação = Número de Comentários + Número de "Eu Conheço"
 ```env
 # Database
 DATABASE_URL="mysql://user:password@host:port/database"
+SHADOW_DATABASE_URL="mysql://user:password@host:port/database_shadow"
 
 # NextAuth
 NEXTAUTH_URL="https://your-domain.com"
@@ -273,10 +358,18 @@ NEXTAUTH_SECRET="your-secret-key"
 CLOUDINARY_CLOUD_NAME="your-cloud-name"
 CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="your-cloud-name"
 
 # OAuth Providers
 GOOGLE_CLIENT_ID="your-google-client-id"
 GOOGLE_CLIENT_SECRET="your-google-client-secret"
+
+# Email (opcional)
+EMAIL_SERVER_HOST="smtp.gmail.com"
+EMAIL_SERVER_PORT="587"
+EMAIL_SERVER_USER="your-email@gmail.com"
+EMAIL_SERVER_PASS="your-app-password"
+EMAIL_FROM="your-email@gmail.com"
 ```
 
 ### **Comandos de Deploy**

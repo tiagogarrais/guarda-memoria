@@ -42,6 +42,20 @@ Preservar a memória cultural das cidades brasileiras, conectando gerações atr
 - **Sistema de pontuação em tempo real**: Atualização automática das posições
 - **Transparência**: Contadores visíveis de interações
 
+### 🖨️ Geração de QR Codes
+
+- **Cartões para impressão**: Geração automática de QR codes para cada postagem
+- **Página dedicada**: Interface otimizada para impressão com informações completas
+- **Conteúdo rico**: Inclui título da memória, autor, data e descrição
+- **Impressão durável**: Design monocromático otimizado para impressão laser
+
+### 👤 Perfil do Usuário
+
+- **Nomes personalizados**: Configuração de display name
+- **Cidades favoritas**: Sistema de cidades preferidas
+- **Página de perfil**: Gerenciamento de informações pessoais
+- **Localização**: Seleção e atualização de cidade/estado
+
 ### 🎨 Interface Moderna
 
 - Design responsivo otimizado para mobile e desktop

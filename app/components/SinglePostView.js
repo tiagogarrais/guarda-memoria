@@ -140,16 +140,27 @@ export default function SinglePostView({ post, user, citySlug }) {
             </div>
           </div>
 
-          {/* Botão de deletar no header */}
-          {isOwner && (
+          {/* Botões no header */}
+          <div className="flex space-x-2">
             <button
-              onClick={() => handleDelete(media.id)}
-              className="text-gray-400 hover:text-red-500 text-lg"
-              title="Apagar publicação"
+              onClick={() =>
+                (window.location.href = `/postagem/${currentPost.permalink}/qr`)
+              }
+              className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+              title="Gerar QR Code"
             >
-              🗑️
+              Gerar QR-Code
             </button>
-          )}
+            {isOwner && (
+              <button
+                onClick={() => handleDelete(media.id)}
+                className="text-gray-400 hover:text-red-500 text-lg"
+                title="Apagar publicação"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Conteúdo da mídia */}
