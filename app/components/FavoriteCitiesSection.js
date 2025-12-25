@@ -5,10 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function FavoriteCitiesSection({ favoriteCities }) {
+  const [states, setStates] = useState({});
   const [cities, setCities] = useState([]);
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+
+  const handleStateChange = (e) => {
+    const stateId = e.target.value;
+    setSelectedState(stateId);
+    setSelectedCity(""); // Resetar cidade ao mudar estado
+  };
+
+  const handleCityChange = (e) => {
+    setSelectedCity(e.target.value);
+  };
 
   const handleRemoveFavorite = async (formData) => {
     setSubmitting(true);
@@ -53,27 +66,39 @@ export default function FavoriteCitiesSection({ favoriteCities }) {
   };
 
   useEffect(() => {
-    async function fetchCities() {
+    async function fetchData() {
       try {
-        const response = await fetch("/api/cities-all");
-        if (response.ok) {
-          const data = await response.json();
-          // Filtrar cidades que já são favoritas
-          const favoriteIds = new Set(favoriteCities.map((city) => city.id));
-          const availableCities = data.filter(
-            (city) => !favoriteIds.has(city.id)
-          );
-          setCities(availableCities);
+        // Buscar estados
+        const statesResponse = await fetch("/api/states");
+        if (statesResponse.ok) {
+          const statesData = await statesResponse.json();
+          setStates(statesData.states);
+        }
+
+        // Se há estado selecionado, buscar cidades
+        if (selectedState) {
+          const citiesResponse = await fetch(`/api/cities?stateId=${selectedState}`);
+          if (citiesResponse.ok) {
+            const citiesData = await citiesResponse.json();
+            // Filtrar cidades que já são favoritas
+            const favoriteIds = new Set(favoriteCities.map((city) => city.id));
+            const availableCities = citiesData.cities.filter(
+              (city) => !favoriteIds.has(city.id)
+            );
+            setCities(availableCities);
+          }
+        } else {
+          setCities([]);
         }
       } catch (error) {
-        console.error("Error fetching cities:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    fetchCities();
-  }, [favoriteCities]);
+    fetchData();
+  }, [favoriteCities, selectedState]);
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden mt-6">
@@ -152,32 +177,63 @@ export default function FavoriteCitiesSection({ favoriteCities }) {
           <form
             action={`/api/user/add-favorite-city`}
             method="POST"
-            className="flex gap-2"
+            className="space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.target);
               handleAddFavorite(formData);
             }}
           >
-            <select
-              name="cityId"
-              required
-              disabled={loading}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
-            >
-              <option value="">
-                {loading ? "Carregando cidades..." : "Selecione uma cidade..."}
-              </option>
-              {cities.map((city) => (
-                <option key={city.id} value={city.id}>
-                  {city.name} - {city.state.sigla.toUpperCase()}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Estado
+              </label>
+              <select
+                name="stateId"
+                value={selectedState}
+                onChange={handleStateChange}
+                required
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              >
+                <option value="">
+                  {loading ? "Carregando estados..." : "Selecione um estado"}
                 </option>
-              ))}
-            </select>
+                {Object.entries(states).map(([id, name]) => (
+                  <option key={id} value={id}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cidade
+              </label>
+              <select
+                name="cityId"
+                value={selectedCity}
+                onChange={handleCityChange}
+                required
+                disabled={loading || !selectedState}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              >
+                <option value="">
+                  {selectedState ? "Selecione uma cidade" : "Primeiro selecione um estado"}
+                </option>
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <button
               type="submit"
-              disabled={loading || submitting}
-              className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400"
+              disabled={loading || submitting || !selectedState || !selectedCity}
+              className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400"
             >
               Adicionar
             </button>
