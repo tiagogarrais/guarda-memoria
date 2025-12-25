@@ -98,6 +98,7 @@ model Media {
   parent    Media?   @relation("MediaReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Media[]  @relation("MediaReplies") // Relacionamento para respostas
   knowledge MediaKnowledge[] // Relacionamento com conhecimentos
+  qrVisits  Int      @default(0) // Contador de visitas via QR code
 
   @@index([userId])
   @@index([stateId, cityId])
@@ -117,4 +118,16 @@ model MediaKnowledge {
   @@unique([userId, mediaId]) // Um usuário só pode conhecer uma mídia uma vez
   @@index([userId])
   @@index([mediaId])
+}
+
+model Visit {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  source    String?  // Ex: "qr", "direct", etc.
+  path      String   // Caminho da página visitada
+  userAgent String?  // User agent do navegador
+  ip        String?  // IP do visitante (opcional)
+
+  @@index([timestamp])
+  @@index([source])
 }

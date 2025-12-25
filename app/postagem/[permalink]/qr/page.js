@@ -130,7 +130,7 @@ export default async function QRPage({ params }) {
           <QRCode
             value={`${
               process.env.NEXTAUTH_URL || "http://localhost:3000"
-            }/postagem/${permalink}`}
+            }/postagem/${permalink}?source=qr`}
             size={468}
           />
         </div>

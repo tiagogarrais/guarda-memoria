@@ -15,9 +15,10 @@ const pacifico = Pacifico({
   display: "swap",
 });
 
-export default async function PostPage({ params }) {
+export default async function PostPage({ params, searchParams }) {
   const session = await getServerSession(authOptions);
   const { permalink } = await params;
+  const { source } = await searchParams;
 
   if (!session) {
     redirect("/api/auth/signin");
@@ -130,6 +131,18 @@ export default async function PostPage({ params }) {
         </main>
       </>
     );
+  }
+
+  // Incrementar contador de visitas via QR se aplicável
+  if (source === 'qr') {
+    try {
+      await prisma.media.update({
+        where: { id: rawPost.id },
+        data: { qrVisits: { increment: 1 } },
+      });
+    } catch (error) {
+      console.error('Erro ao incrementar qrVisits:', error);
+    }
   }
 
   // Processar os dados para incluir informações de conhecimento
