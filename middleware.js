@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -8,11 +8,11 @@ export async function middleware(request) {
 
   // Só rastrear páginas públicas, não APIs ou admin
   if (
-    pathname.startsWith('/api') ||
-    pathname.startsWith('/admin') ||
-    pathname.startsWith('/auth') ||
-    pathname.startsWith('/_next') ||
-    pathname.includes('.')
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
@@ -22,13 +22,13 @@ export async function middleware(request) {
     await prisma.visit.create({
       data: {
         path: pathname,
-        source: request.nextUrl.searchParams.get('source') || null,
-        userAgent: request.headers.get('user-agent') || null,
-        ip: request.ip || request.headers.get('x-forwarded-for') || null,
+        source: request.nextUrl.searchParams.get("source") || null,
+        userAgent: request.headers.get("user-agent") || null,
+        ip: request.ip || request.headers.get("x-forwarded-for") || null,
       },
     });
   } catch (error) {
-    console.error('Erro ao registrar visita:', error);
+    console.error("Erro ao registrar visita:", error);
   }
 
   return NextResponse.next();
@@ -43,6 +43,6 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    "/((?!api|_next/static|_next/image|favicon.ico).*)",
   ],
 };

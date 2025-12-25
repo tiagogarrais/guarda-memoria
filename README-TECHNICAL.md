@@ -8,7 +8,7 @@ O **Guarda Memória** é uma aplicação web full-stack construída com Next.js 
 
 ### **Frontend**
 
-- **Framework**: Next.js 14 com App Router
+- **Framework**: Next.js 15 com App Router
 - **Linguagem**: JavaScript/TypeScript
 - **Styling**: Tailwind CSS
 - **Componentes**: React com hooks e context API
@@ -34,28 +34,58 @@ guarda-memoria/
 │   ├── api/                      # API Routes
 │   │   ├── auth/[...nextauth]/   # Autenticação NextAuth
 │   │   ├── cities/               # API de cidades
+│   │   │   └── [cityId]/
+│   │   ├── cities-all/           # API de todas as cidades
+│   │   ├── cloudinary-signature/ # Assinatura para uploads Cloudinary
 │   │   ├── media/                # API de mídias
 │   │   │   └── [mediaId]/
 │   │   │       └── knowledge/    # API de conhecimentos
+│   │   ├── permalink/            # API de permalinks
+│   │   │   └── [permalink]/
 │   │   ├── states/               # API de estados
 │   │   ├── update-location/      # Atualização de localização
-│   │   └── upload/               # Upload de mídias
+│   │   ├── upload/               # Upload de mídias
+│   │   └── user/                 # APIs de usuário
+│   │       ├── add-favorite-city/
+│   │       ├── remove-favorite-city/
+│   │       └── update-display-name/
+│   ├── admin/                    # Página de administração
 │   ├── auth/                     # Páginas de autenticação
-│   ├── cidade/[cityId]/          # Páginas dinâmicas de cidades
+│   │   └── signin/
+│   ├── cidade/[citySlug]/        # Páginas dinâmicas de cidades
 │   ├── components/               # Componentes React
 │   ├── globals.css               # Estilos globais
 │   ├── layout.js                 # Layout principal
-│   └── page.js                   # Página inicial
+│   ├── page.js                   # Página inicial
+│   ├── postagem/[permalink]/     # Páginas de postagens
+│   │   └── qr/                   # Página de QR code
+│   ├── select-location/          # Seleção de localização
+│   └── usuario/                  # Página de perfil do usuário
 ├── lib/                          # Utilitários e bibliotecas
-│   └── mediaUtils.js             # Funções de mídia
+│   ├── mediaUtils.js             # Funções de mídia
+│   └── userUtils.js              # Funções de usuário
 ├── prisma/                       # Schema e configurações do banco
 │   ├── schema.prisma             # Schema do banco de dados
-│   └── seed.js                   # Dados iniciais
+│   ├── seed.js                   # Dados iniciais
+│   ├── seed.js.backup            # Backup do seed
+│   └── migrations/               # Migrações do banco
 ├── public/                       # Arquivos estáticos
+│   └── estados-cidades2.json     # Dados de estados e cidades
 ├── scripts/                      # Scripts utilitários
 │   └── populate-scores.js        # Script de população de pontuações
 ├── docker/                       # Configurações Docker
-└── package.json                  # Dependências e scripts
+│   └── mysql/                    # Configuração MySQL Docker
+│       └── init/
+├── generate-city-slugs.js        # Script para gerar slugs de cidades
+├── jsconfig.json                 # Configuração JavaScript
+├── middleware.js                 # Middleware Next.js
+├── next-env.d.ts                 # Tipos Next.js
+├── next.config.js                # Configuração Next.js
+├── package.json                  # Dependências e scripts
+├── postcss.config.js             # Configuração PostCSS
+├── README.md                     # Documentação principal
+├── README-TECHNICAL.md           # Documentação técnica
+└── tailwind.config.js            # Configuração Tailwind CSS
 ```
 
 ## 🗄️ Modelo de Dados
@@ -103,6 +133,7 @@ model Media {
   parentId  String?  // ID da mídia pai (comentários)
   replies   Media[]  @relation("MediaReplies") // Respostas
   knowledge MediaKnowledge[] // Conhecimentos
+  qrVisits  Int      @default(0) // Contador de visitas via QR code
 }
 ```
 
@@ -118,6 +149,22 @@ model MediaKnowledge {
   createdAt DateTime @default(now())
 
   @@unique([userId, mediaId]) // Um usuário conhece uma mídia apenas uma vez
+}
+```
+
+#### **Visit (Visita/Analytics)**
+
+```prisma
+model Visit {
+  id        String   @id @default(cuid())
+  timestamp DateTime @default(now())
+  source    String?  // Ex: "qr", "direct", etc.
+  path      String   // Caminho da página visitada
+  userAgent String?  // User agent do navegador
+  ip        String?  // IP do visitante (opcional)
+
+  @@index([timestamp])
+  @@index([source])
 }
 ```
 
@@ -195,6 +242,46 @@ Pontuação = Número de Comentários + Número de "Eu Conheço"
 - `categories`: JSON array de categorias
 - `parentId`: ID da mídia pai (para comentários)
 
+### **GET /api/cities**
+
+**Descrição**: Lista cidades, opcionalmente filtradas por estado
+
+**Parâmetros**:
+
+- `stateId` (opcional): ID do estado
+
+### **GET /api/cities-all**
+
+**Descrição**: Lista todas as cidades sem filtros
+
+### **GET /api/states**
+
+**Descrição**: Lista todos os estados
+
+### **POST /api/cloudinary-signature**
+
+**Descrição**: Gera assinatura para upload direto no Cloudinary
+
+### **POST /api/user/add-favorite-city**
+
+**Descrição**: Adiciona uma cidade aos favoritos do usuário
+
+### **POST /api/user/remove-favorite-city**
+
+**Descrição**: Remove uma cidade dos favoritos
+
+### **POST /api/user/update-display-name**
+
+**Descrição**: Atualiza o nome de exibição do usuário
+
+### **POST /api/update-location**
+
+**Descrição**: Atualiza localização (estado/cidade) do usuário
+
+### **GET /api/permalink/[permalink]**
+
+**Descrição**: Redireciona para a postagem correspondente ao permalink
+
 ## �️ Sistema de QR Codes
 
 ### **Funcionalidade**
@@ -216,6 +303,25 @@ O sistema de QR codes permite gerar cartões impressos para cada postagem, facil
 - Renderiza layout de impressão
 - QR code aponta para URL da postagem
 ```
+
+## 📊 Sistema de Analytics
+
+### **Funcionalidade**
+
+O sistema coleta dados de visitas para análise de engajamento e popularidade das postagens.
+
+### **Implementação**
+
+- **Modelo Visit**: Registra cada acesso com timestamp, source (qr/direct), path, etc.
+- **Página Admin**: `/admin` - Exibe estatísticas como total de visitas, top posts por score, visitas via QR.
+- **Contadores**: `qrVisits` no modelo Media para visitas específicas via QR.
+
+### **Métricas Coletadas**
+
+- Total de visitas gerais
+- Visitas via QR code
+- Top 5 postagens por pontuação
+- Detalhes de cada visita (opcional: IP, user agent)
 
 ## 🔗 Sistema de Permalinks
 
@@ -296,7 +402,9 @@ Os usuários podem marcar cidades como favoritas para acesso rápido e personali
 ### **Scripts Personalizados**
 
 - **`scripts/populate-scores.js`**: Calcula pontuações para mídias existentes
+- **`generate-city-slugs.js`**: Gera slugs únicos para cidades brasileiras
 - **`lib/mediaUtils.js`**: Utilitários para manipulação de mídias
+- **`lib/userUtils.js`**: Utilitários para manipulação de usuários
 
 ## 🔐 Sistema de Autenticação
 
@@ -318,7 +426,7 @@ Os usuários podem marcar cidades como favoritas para acesso rápido e personali
 
 ```json
 {
-  "next": "^14.2.15",
+  "next": "^15.5.7",
   "react": "^18.2.0",
   "react-dom": "^18.2.0",
   "@prisma/client": "^5.15.0",

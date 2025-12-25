@@ -13,7 +13,7 @@ export default async function AdminPage() {
   }
 
   // Verificar se o usuário é admin
-  const admins = process.env.ADMINS ? process.env.ADMINS.split(',') : [];
+  const admins = process.env.ADMINS ? process.env.ADMINS.split(",") : [];
   if (!admins.includes(session.user.email)) {
     redirect("/");
   }
@@ -24,7 +24,7 @@ export default async function AdminPage() {
       user: { select: { displayName: true, name: true } },
       city: { select: { name: true } },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 
   // Contador total de visitas
@@ -36,7 +36,7 @@ export default async function AdminPage() {
       user: { select: { displayName: true, name: true } },
       city: { select: { name: true } },
     },
-    orderBy: { score: 'desc' }, // Por enquanto, usar score; depois pode ser score + qrVisits
+    orderBy: { score: "desc" }, // Por enquanto, usar score; depois pode ser score + qrVisits
     take: 5,
   });
 
@@ -48,7 +48,9 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">Painel de Administração - Guarda Memória</h1>
+        <h1 className="text-3xl font-bold mb-8">
+          Painel de Administração - Guarda Memória
+        </h1>
 
         {/* Contadores Gerais */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -62,7 +64,9 @@ export default async function AdminPage() {
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-2">Visitas via QR</h2>
-            <p className="text-3xl font-bold text-purple-600">{qrVisitsTotal._sum.qrVisits || 0}</p>
+            <p className="text-3xl font-bold text-purple-600">
+              {qrVisitsTotal._sum.qrVisits || 0}
+            </p>
           </div>
         </div>
 
@@ -115,7 +119,8 @@ export default async function AdminPage() {
           <ul>
             {topPosts.map((post, index) => (
               <li key={post.id} className="mb-2">
-                {index + 1}. {post.city.name} - {post.user?.displayName || post.user?.name}
+                {index + 1}. {post.city.name} -{" "}
+                {post.user?.displayName || post.user?.name}
               </li>
             ))}
           </ul>

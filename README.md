@@ -49,12 +49,12 @@ Preservar a memória cultural das cidades brasileiras, conectando gerações atr
 - **Conteúdo rico**: Inclui título da memória, autor, data e descrição
 - **Impressão durável**: Design monocromático otimizado para impressão laser
 
-### 👤 Perfil do Usuário
+### � Painel Administrativo
 
-- **Nomes personalizados**: Configuração de display name
-- **Cidades favoritas**: Sistema de cidades preferidas
-- **Página de perfil**: Gerenciamento de informações pessoais
-- **Localização**: Seleção e atualização de cidade/estado
+- **Acesso restrito**: Apenas administradores autorizados
+- **Estatísticas em tempo real**: Total de visitas, top postagens, engajamento
+- **Gerenciamento de conteúdo**: Visualização e moderação de postagens
+- **Analytics detalhados**: Dados de visitas via QR e acesso direto
 
 ### 🎨 Interface Moderna
 

@@ -134,14 +134,14 @@ export default async function PostPage({ params, searchParams }) {
   }
 
   // Incrementar contador de visitas via QR se aplicável
-  if (source === 'qr') {
+  if (source === "qr") {
     try {
       await prisma.media.update({
         where: { id: rawPost.id },
         data: { qrVisits: { increment: 1 } },
       });
     } catch (error) {
-      console.error('Erro ao incrementar qrVisits:', error);
+      console.error("Erro ao incrementar qrVisits:", error);
     }
   }
 

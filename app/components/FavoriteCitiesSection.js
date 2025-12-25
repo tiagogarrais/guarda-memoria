@@ -77,7 +77,9 @@ export default function FavoriteCitiesSection({ favoriteCities }) {
 
         // Se há estado selecionado, buscar cidades
         if (selectedState) {
-          const citiesResponse = await fetch(`/api/cities?stateId=${selectedState}`);
+          const citiesResponse = await fetch(
+            `/api/cities?stateId=${selectedState}`
+          );
           if (citiesResponse.ok) {
             const citiesData = await citiesResponse.json();
             // Filtrar cidades que já são favoritas
@@ -220,7 +222,9 @@ export default function FavoriteCitiesSection({ favoriteCities }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
               >
                 <option value="">
-                  {selectedState ? "Selecione uma cidade" : "Primeiro selecione um estado"}
+                  {selectedState
+                    ? "Selecione uma cidade"
+                    : "Primeiro selecione um estado"}
                 </option>
                 {cities.map((city) => (
                   <option key={city.id} value={city.id}>
@@ -232,7 +236,9 @@ export default function FavoriteCitiesSection({ favoriteCities }) {
 
             <button
               type="submit"
-              disabled={loading || submitting || !selectedState || !selectedCity}
+              disabled={
+                loading || submitting || !selectedState || !selectedCity
+              }
               className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:bg-gray-400"
             >
               Adicionar
