@@ -151,86 +151,99 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
             <div
               key={media.id}
               id={`media-${media.id}`}
-              className="border rounded p-4 bg-white shadow-sm relative"
+              className="bg-white rounded-lg shadow-md p-6 mb-6 relative"
             >
-              {status === "authenticated" &&
-                session?.user?.id == media.userId && (
-                  <button
-                    onClick={() => handleDelete(media.id)}
-                    className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg"
-                    title="Apagar publicação"
-                  >
-                    🗑️
-                  </button>
-                )}
-              {/* Título da postagem */}
-              <div className="mb-4">
-                <h3 className="text-lg font-bold text-gray-800 mb-2 text-center">
-                  {media.permalink ? (
-                    <a
-                      href={`/postagem/${media.permalink}`}
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                      title="Link permanente para esta publicação"
+              {/* Header da postagem */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {(media.user?.displayName ||
+                      media.user?.name ||
+                      "U")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">
+                      {media.user?.displayName || media.user?.name || "Usuário"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {getMediaInfo(media.type).type}{" "}
+                      {getMediaInfo(media.type).verb} em{" "}
+                      {new Date(media.createdAt).toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Botões no header */}
+                <div className="flex space-x-2">
+                  {media.permalink && (
+                    <button
+                      onClick={() =>
+                        (window.location.href = `/postagem/${media.permalink}/qr`)
+                      }
+                      className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+                      title="Gerar QR Code"
                     >
-                      {getMediaInfo(media.type).type}{" "}
-                      {getMediaInfo(media.type).verb} por{" "}
-                      {media.user?.name || "Usuário"} em{" "}
-                      {new Date(media.createdAt).toLocaleDateString()}
-                    </a>
-                  ) : (
-                    <>
-                      {getMediaInfo(media.type).type}{" "}
-                      {getMediaInfo(media.type).verb} por{" "}
-                      {media.user?.name || "Usuário"} em{" "}
-                      {new Date(media.createdAt).toLocaleDateString()}
-                    </>
+                      Gerar QR-Code
+                    </button>
                   )}
-                </h3>
+                  {status === "authenticated" &&
+                    session?.user?.id == media.userId && (
+                      <button
+                        onClick={() => handleDelete(media.id)}
+                        className="text-gray-400 hover:text-red-500 text-lg"
+                        title="Apagar publicação"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                </div>
               </div>
 
-              {/* Mensagem de texto - sempre mostrar se existir */}
-              {media.text && (
-                <div className="mb-3">
-                  <p className="text-gray-800 text-base leading-relaxed whitespace-pre-wrap">
-                    {media.text}
-                  </p>
-                </div>
-              )}
+              {/* Conteúdo da mídia */}
+              <div className="mb-4">
+                {/* Texto primeiro */}
+                {media.text && (
+                  <div className="mb-4">
+                    <p className="text-gray-800 whitespace-pre-wrap text-lg leading-relaxed">
+                      {media.text}
+                    </p>
+                  </div>
+                )}
 
-              {/* Imagem */}
-              {media.type === "image" && media.url && (
-                <div className="mb-3">
-                  <Image
-                    src={media.url}
-                    alt="Mídia"
-                    width={600}
-                    height={450}
-                    className="w-full max-h-96 object-contain rounded cursor-pointer"
-                    onClick={() => openModal(media.url)}
-                  />
-                </div>
-              )}
+                {/* Conteúdo visual depois */}
+                {media.type === "image" && media.url && (
+                  <div className="relative">
+                    <Image
+                      src={media.url}
+                      alt={media.text || "Imagem"}
+                      width={800}
+                      height={600}
+                      className="w-full h-auto rounded-lg cursor-pointer"
+                      onClick={() => openModal(media.url)}
+                    />
+                  </div>
+                )}
 
-              {/* Vídeo */}
-              {media.type === "video" && (
-                <div className="mb-3">
-                  <video
-                    controls
-                    className="w-full max-h-96 object-contain rounded"
-                  >
-                    <source src={media.url} />
+                {media.type === "video" && media.url && (
+                  <video controls className="w-full rounded-lg">
+                    <source src={media.url} type="video/mp4" />
+                    Seu navegador não suporta o elemento de vídeo.
                   </video>
-                </div>
-              )}
+                )}
 
-              {/* Áudio */}
-              {media.type === "audio" && (
-                <div className="mb-3">
+                {media.type === "audio" && media.url && (
                   <audio controls className="w-full">
-                    <source src={media.url} />
+                    <source src={media.url} type="audio/mpeg" />
+                    Seu navegador não suporta o elemento de áudio.
                   </audio>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Botões de ação */}
               <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
@@ -305,61 +318,88 @@ export default function MediaFeed({ refreshTrigger, cityId }) {
 
               {/* Exibir comentários/respostas */}
               {media.replies && media.replies.length > 0 && (
-                <div className="mt-4 border-t pt-4">
-                  <h4 className="text-sm font-semibold">
-                    Você tem outra mídia desta memória? Entre na conversa e
-                    compartilhe com a gente!
+                <div className="mt-6">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                    {media.replies.length} resposta
+                    {media.replies.length !== 1 ? "s" : ""}
                   </h4>
-                  {media.replies.map((reply) => (
-                    <div
-                      key={reply.id}
-                      className="mt-2 p-2 bg-gray-50 rounded relative"
-                    >
-                      {status === "authenticated" &&
-                        session?.user?.id == reply.userId && (
-                          <button
-                            onClick={() => handleDelete(reply.id)}
-                            className="absolute top-1 right-1 text-gray-400 hover:text-red-500 text-sm"
-                            title="Apagar comentário"
-                          >
-                            🗑️
-                          </button>
+                  <div className="space-y-4">
+                    {media.replies.map((reply) => (
+                      <div
+                        key={reply.id}
+                        className="bg-white rounded-lg shadow-md p-4 ml-8 border-l-4 border-blue-200 relative"
+                      >
+                        {status === "authenticated" &&
+                          session?.user?.id == reply.userId && (
+                            <button
+                              onClick={() => handleDelete(reply.id)}
+                              className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg"
+                              title="Apagar comentário"
+                            >
+                              🗑️
+                            </button>
+                          )}
+                        {/* Header da resposta */}
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            {(reply.user?.displayName ||
+                              reply.user?.name ||
+                              "U")[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 text-sm">
+                              {reply.user?.displayName ||
+                                reply.user?.name ||
+                                "Usuário"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {getMediaInfo(reply.type).type}{" "}
+                              {getMediaInfo(reply.type).verb} em{" "}
+                              {new Date(reply.createdAt).toLocaleDateString(
+                                "pt-BR",
+                                {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        {/* Conteúdo da resposta */}
+                        {reply.text && (
+                          <p className="text-sm mb-2 whitespace-pre-wrap">
+                            {reply.text}
+                          </p>
                         )}
-                      {reply.text && (
-                        <p className="text-sm mb-1 whitespace-pre-wrap">
-                          {reply.text}
-                        </p>
-                      )}
-                      {reply.type === "image" && reply.url && (
-                        <Image
-                          src={reply.url}
-                          alt="Comentário"
-                          width={200}
-                          height={150}
-                          className="w-32 max-h-32 object-contain rounded cursor-pointer"
-                          onClick={() => openModal(reply.url)}
-                        />
-                      )}
-                      {reply.type === "video" && (
-                        <video
-                          controls
-                          className="w-32 max-h-32 object-contain rounded"
-                        >
-                          <source src={reply.url} />
-                        </video>
-                      )}
-                      {reply.type === "audio" && (
-                        <audio controls className="w-32">
-                          <source src={reply.url} />
-                        </audio>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        {getMediaInfo(reply.type).type} de{" "}
-                        {reply.user?.name || "Usuário"} em{" "}
-                        {new Date(reply.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
+                        {reply.type === "image" && reply.url && (
+                          <Image
+                            src={reply.url}
+                            alt="Comentário"
+                            width={300}
+                            height={225}
+                            className="w-full max-h-48 object-contain rounded-lg cursor-pointer"
+                            onClick={() => openModal(reply.url)}
+                          />
+                        )}
+                        {reply.type === "video" && (
+                          <video
+                            controls
+                            className="w-full max-h-48 object-contain rounded-lg"
+                          >
+                            <source src={reply.url} />
+                          </video>
+                        )}
+                        {reply.type === "audio" && (
+                          <audio controls className="w-full">
+                            <source src={reply.url} />
+                          </audio>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
