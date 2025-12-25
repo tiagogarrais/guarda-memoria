@@ -82,23 +82,25 @@ export default async function QRPage({ params }) {
   };
 
   return (
-    <div className="min-h-screen bg-white p-8 flex items-center justify-center">
-      <div className="max-w-md mx-auto text-center">
+    <div className="min-h-screen bg-white p-8 print:pt-0 flex items-center justify-center">
+      <div className="max-w-2xl mx-auto text-center">
         {/* Cabeçalho do site */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-black mb-2">Guarda Memória</h1>
-          <p className="text-sm text-black">
+          <h1 className="text-[62.4px] font-bold text-black mb-2">
+            Guarda Memória
+          </h1>
+          <p className="text-[26px] text-black">
             Preservando memórias das cidades brasileiras
           </p>
         </div>
 
         {/* Título da postagem */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-black mb-2">
+          <h2 className="text-[28.08px] font-semibold text-black mb-2">
             Memória de {post.city.name}
           </h2>
           {post.text && (
-            <p className="text-sm text-black italic">
+            <p className="text-lg text-black italic">
               &ldquo;
               {post.text.length > 100
                 ? post.text.substring(0, 100) + "..."
@@ -110,7 +112,7 @@ export default async function QRPage({ params }) {
 
         {/* Informações do envio */}
         <div className="mb-6">
-          <p className="text-xs text-black">
+          <p className="text-[15.6px] text-black">
             {getMediaInfo(post.type).type} enviado por{" "}
             {post.user?.displayName || post.user?.name || "Usuário"} em{" "}
             {new Date(post.createdAt).toLocaleDateString("pt-BR", {
@@ -129,17 +131,17 @@ export default async function QRPage({ params }) {
             value={`${
               process.env.NEXTAUTH_URL || "http://localhost:3000"
             }/postagem/${permalink}`}
-            size={200}
+            size={468}
           />
         </div>
 
         {/* Chamada para ação */}
         <div className="mb-6">
-          <p className="text-sm text-black mb-2">
+          <p className="text-lg text-black mb-2">
             Escaneie o QR code para acessar esta memória e descobrir mais sobre{" "}
             {post.city.name}.
           </p>
-          <p className="text-xs text-black">
+          <p className="text-[15.6px] text-black">
             Imprima este cartão e cole nos locais das memórias para compartilhar
             com visitantes.
           </p>
