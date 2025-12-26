@@ -54,21 +54,33 @@ export default async function CityPage({ params }) {
     return <div>Cidade não encontrada</div>;
   }
 
+  // Verificar se o usuário é administrador
+  const admins = process.env.ADMINS ? process.env.ADMINS.split(",") : [];
+  const isAdmin = session ? admins.includes(session.user.email) : false;
+
   return (
     <>
-      <Header showUserInfo={true} session={session} user={user} />
+      <Header
+        showUserInfo={true}
+        session={session}
+        user={user}
+        isAdmin={isAdmin}
+      />
 
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Header da Cidade */}
           <div className="text-center mb-8">
-            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 ${pacifico.className}`}>
+            <h1
+              className={`text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 ${pacifico.className}`}
+            >
               Memórias de
             </h1>
-            <h1 className={`text-2xl sm:text-3xl lg:text-4xl text-gray-700 ${pacifico.className}`}>
+            <h1
+              className={`text-2xl sm:text-3xl lg:text-4xl text-gray-700 ${pacifico.className}`}
+            >
               {cityData.name} - {cityData.state.sigla.toUpperCase()}
             </h1>
-            
           </div>
 
           {/* Feed da Cidade */}

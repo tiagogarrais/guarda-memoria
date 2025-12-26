@@ -40,6 +40,10 @@ export default async function PostPage({ params, searchParams }) {
     redirect("/select-location");
   }
 
+  // Verificar se o usuário é administrador
+  const admins = process.env.ADMINS ? process.env.ADMINS.split(",") : [];
+  const isAdmin = admins.includes(session.user.email);
+
   // Buscar a postagem pelo permalink
   const rawPost = await prisma.media.findUnique({
     where: { permalink },
@@ -115,7 +119,12 @@ export default async function PostPage({ params, searchParams }) {
   if (!rawPost) {
     return (
       <>
-        <Header showUserInfo={true} session={session} user={user} />
+        <Header
+          showUserInfo={true}
+          session={session}
+          user={user}
+          isAdmin={isAdmin}
+        />
         <main className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
@@ -175,7 +184,12 @@ export default async function PostPage({ params, searchParams }) {
 
   return (
     <>
-      <Header showUserInfo={true} session={session} user={user} />
+      <Header
+        showUserInfo={true}
+        session={session}
+        user={user}
+        isAdmin={isAdmin}
+      />
 
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
