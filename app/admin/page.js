@@ -27,6 +27,21 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // Buscar usuários com contagem de publicações
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      displayName: true,
+      email: true,
+      createdAt: true,
+      _count: {
+        select: { medias: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
   // Contador total de visitas
   const totalVisits = await prisma.visit.count();
 
@@ -53,7 +68,7 @@ export default async function AdminPage() {
         </h1>
 
         {/* Contadores Gerais */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-2">Total de Visitas</h2>
             <p className="text-3xl font-bold text-blue-600">{totalVisits}</p>
@@ -63,10 +78,49 @@ export default async function AdminPage() {
             <p className="text-3xl font-bold text-green-600">{posts.length}</p>
           </div>
           <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-2">Usuários Cadastrados</h2>
+            <p className="text-3xl font-bold text-orange-600">{users.length}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-2">Visitas via QR</h2>
             <p className="text-3xl font-bold text-purple-600">
               {qrVisitsTotal._sum.qrVisits || 0}
             </p>
+          </div>
+        </div>
+
+        {/* Lista de Usuários */}
+        <div className="bg-white p-6 rounded-lg shadow mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Usuários Cadastrados</h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="px-4 py-2 text-left">Nome</th>
+                  <th className="px-4 py-2 text-left">Email</th>
+                  <th className="px-4 py-2 text-left">Data de Cadastro</th>
+                  <th className="px-4 py-2 text-left">Publicações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id} className="border-t">
+                    <td className="px-4 py-2">
+                      {user.displayName || user.name || "Sem nome"}
+                    </td>
+                    <td className="px-4 py-2">{user.email}</td>
+                    <td className="px-4 py-2">
+                      {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                    </td>
+                    <td className="px-4 py-2">
+                      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium">
+                        {user._count.medias}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
 
