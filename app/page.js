@@ -3,6 +3,7 @@ import { authOptions } from "@/app/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PrismaClient } from "@prisma/client";
+import VisitTracker from "@/components/VisitTracker";
 
 const prisma = new PrismaClient();
 
@@ -290,6 +291,7 @@ export default async function Home() {
           </div>
         </div>
       </footer>
+      <VisitTracker />
     </div>
   );
 }

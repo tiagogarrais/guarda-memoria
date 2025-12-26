@@ -1,7 +1,4 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
 
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
@@ -17,18 +14,27 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
-  // Registrar visita
+  // Registrar visita via API
   try {
-    await prisma.visit.create({
-      data: {
-        path: pathname,
-        source: request.nextUrl.searchParams.get("source") || null,
-        userAgent: request.headers.get("user-agent") || null,
-        ip: request.ip || request.headers.get("x-forwarded-for") || null,
+    const visitData = {
+      path: pathname,
+      source: request.nextUrl.searchParams.get("source") || null,
+      userAgent: request.headers.get("user-agent") || null,
+      ip: request.ip || request.headers.get("x-forwarded-for") || null,
+    };
+
+    // Fazer chamada para a API de visita em background
+    fetch(`${request.nextUrl.origin}/api/visit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify(visitData),
+    }).catch((error) => {
+      console.error("Erro ao chamar API de visita:", error);
     });
   } catch (error) {
-    console.error("Erro ao registrar visita:", error);
+    console.error("Erro no middleware:", error);
   }
 
   return NextResponse.next();
