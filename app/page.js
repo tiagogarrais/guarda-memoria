@@ -55,7 +55,7 @@ export default async function Home() {
               </span>
             </div>
             <Link
-              href="/api/auth/signin/google"
+              href="/auth/signin"
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Entrar
@@ -82,7 +82,7 @@ export default async function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center px-4">
               <Link
-                href="/api/auth/signin/google"
+                href="/auth/signin"
                 className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto text-center"
               >
                 Começar a Contribuir
@@ -261,7 +261,7 @@ export default async function Home() {
             Cada história compartilhada fortalece nossa identidade cultural.
           </p>
           <Link
-            href="/api/auth/signin/google"
+            href="/auth/signin"
             className="inline-block bg-white text-blue-600 px-8 py-4 rounded-xl text-lg font-semibold hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
           >
             Começar Agora - É Gratuito!

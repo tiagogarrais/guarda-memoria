@@ -54,6 +54,9 @@ export async function GET(request) {
         user: {
           select: { id: true, name: true, image: true },
         },
+        city: {
+          select: { id: true, name: true, state: { select: { sigla: true } } },
+        },
         replies: {
           // Novo: incluir respostas/comentários
           select: {
@@ -71,6 +74,13 @@ export async function GET(request) {
             permalink: true, // Adicionar permalink também para replies
             user: {
               select: { id: true, name: true, image: true },
+            },
+            city: {
+              select: {
+                id: true,
+                name: true,
+                state: { select: { sigla: true } },
+              },
             },
           },
           orderBy: {

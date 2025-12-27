@@ -365,7 +365,7 @@ export default function PostCard({
         )}
 
         {/* Formulário de resposta */}
-        {replyingTo === currentMedia.id && !isReply && (
+        {replyingTo === currentMedia.id && !isReply && currentMedia.city && (
           <div
             ref={replyFormRef}
             className="mt-4 bg-gray-50 rounded-lg p-4 border-l-4 border-blue-200"
@@ -375,11 +375,15 @@ export default function PostCard({
             </h3>
             <UploadForm
               onUploadSuccess={handleReplySuccessInternal}
-              userCity={{
-                id: currentMedia.cityId,
-                name: currentMedia.city.name,
-                stateSigla: currentMedia.city.state.sigla,
-              }}
+              userCity={
+                currentMedia.city
+                  ? {
+                      id: currentMedia.cityId,
+                      name: currentMedia.city.name,
+                      stateSigla: currentMedia.city.state.sigla,
+                    }
+                  : null
+              }
               parentId={currentMedia.id}
               isReply={true}
             />
